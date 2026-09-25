@@ -1,0 +1,6 @@
+# Phase-3 tracking v2 (docs/TRACKING_AUDIT.md). Declared BEFORE measuring the effect of the fixes.
+objects: cold_segments          # only features with a < 245 K segment (Phase-1 segmentation, unchanged)
+linker: overlap                 # TITAN-style area-overlap linking; modes "none" and "flow" are both run
+min_overlap_frac: 0.2           # overlap / min(parent area, child area); PROPOSED, sensitivity reported at 0.1/0.3
+centroid: coldness              # centroid weighted by (245 K - BT) over the segment
+min_frames: 2                   # same stub rule as Phase 1 (>= 30 min)

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "Pahalgam",
+    "printed_as": "Pahalgam",
+    "state_hint": "Jammu and Kashmir",
+    "query": "Pahalgam, Jammu and Kashmir, India",
+    "lat": 34.0322048,
+    "lon": 75.3226479,
+    "osm_display_name": "Pahalgam, Anantnag, Jammu and Kashmir, 192126, India",
+    "status": "OK"
+  },
+  {
+    "name": "Mussoorie",
+    "printed_as": "Mussoorie",
+    "state_hint": "Uttarakhand",
+    "query": "Mussoorie, Uttarakhand, India",
+    "lat": 30.4569012,
+    "lon": 78.0782906,
+    "osm_display_name": "Mussoorie, Dehradun, Uttarakhand, 248179, India",
+    "status": "OK"
+  },
+  {
+    "name": "Tungnath",
+    "printed_as": "Tungnath",
+    "state_hint": "Uttarakhand",
+    "query": "Tungnath, Uttarakhand, India",
+    "lat": null,
+    "lon": null,
+    "status": "NOT_FOUND"
+  },
+  {
+    "name": "Chandrashila",
+    "printed_as": "Chandrashila",
+    "state_hint": "Uttarakhand",
+    "query": "Chandrashila, Uttarakhand, India",
+    "lat": 30.4864571,
+    "lon": 79.2212307,
+    "osm_display_name": "Chandrashila, NH107A, Bhulkhana Chatti, Pokhari, Chamoli, Uttarakhand, India",
+    "status": "OK"
+  },
+  {
+    "name": "Bageshwar",
+    "printed_as": "Bageshwar",
+    "state_hint": "Uttarakhand",
+    "query": "Bageshwar, Uttarakhand, India",
+    "lat": 30.0087902,
+    "lon": 79.9280183,
+    "osm_display_name": "Bageshwar, Uttarakhand, India",
+    "status": "OK"
+  }
+]

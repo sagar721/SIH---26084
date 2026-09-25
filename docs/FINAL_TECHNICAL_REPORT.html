@@ -1,0 +1,2482 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@page { size: A4; margin: 18mm 15mm 18mm 15mm; }
+body { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 9.4pt; line-height: 1.4; color: #1C2433; }
+h1 { font-size: 17pt; color: #1F2A44; border-bottom: 2px solid #1F2A44; padding-bottom: 4px; margin-top: 26px; page-break-after: avoid; }
+h2 { font-size: 14pt; color: #1F2A44; margin-top: 20px; page-break-after: avoid; }
+h3 { font-size: 11.5pt; margin-top: 14px; page-break-after: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 6px 0 10px; font-size: 8pt; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th { background: #EEF1F6; text-align: left; }
+th, td { border: 1px solid #C9CED8; padding: 3px 5px; vertical-align: top; overflow-wrap: break-word; }
+td code, th code { word-break: break-all; font-size: 7.3pt; }
+code { font-family: Menlo, monospace; font-size: 8.6pt; background: #F4F5F7; padding: 0 2px; }
+pre { background: #F4F5F7; padding: 8px; font-size: 8.2pt; white-space: pre-wrap; page-break-inside: avoid; }
+pre.mermaid { background: #fff; text-align: center; page-break-inside: avoid; }
+pre.mermaid svg { max-width: 100%; height: auto; max-height: 215mm; }
+figure { margin: 8px 0; text-align: center; page-break-inside: avoid; } figure img { max-width: 100%; max-height: 100mm; border: 1px solid #ddd; }
+blockquote { border-left: 4px solid #1F2A44; margin: 8px 0; padding: 4px 10px; background: #F6F7FA; }
+.cover { height: 250mm; display: flex; flex-direction: column; justify-content: center; page-break-after: always; }
+.pb { page-break-after: always; }
+em { color: #444; }
+</style>
+<script src="file:///private/tmp/claude-501/-Users-admin-Documents-NEW-PS-SIH/53e8e77a-feaf-4520-8419-800a48da9d41/scratchpad/pdfgen/node_modules/mermaid/dist/mermaid.min.js"></script></head>
+<body><div class="cover">
+
+<p style="font-size:11pt;color:#6B6457;letter-spacing:0.08em">SMART INDIA HACKATHON 2026 · FINAL TECHNICAL REPORT</p>
+
+<h1 style="font-size:26pt;border:0;margin:6px 0 4px">StormLife Nowcast</h1>
+<p style="font-size:15pt;margin:0 0 18px;color:#1F2A44">Satellite-first convective-scale nowcasting of deep convection for India (0–6 h): implementation, validation and replay prototype</p>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Problem Statement ID</strong></td>
+<td>SIH26084</td>
+</tr>
+<tr>
+<td><strong>Problem Statement title</strong></td>
+<td>Convective Scale Nowcasting for Thunderstorms, Hail &amp; Cloudbursts (0–6 hr)</td>
+</tr>
+<tr>
+<td><strong>Organisation</strong></td>
+<td>Ministry of Earth Sciences (MoES) / NCMRWF</td>
+</tr>
+<tr>
+<td><strong>Category / Theme</strong></td>
+<td>Software / Disaster Management</td>
+</tr>
+<tr>
+<td><strong>Team name</strong></td>
+<td>[TEAM NAME]</td>
+</tr>
+<tr>
+<td><strong>Team ID</strong></td>
+<td>[TEAM ID]</td>
+</tr>
+<tr>
+<td><strong>Team leader</strong></td>
+<td>[TEAM LEADER]</td>
+</tr>
+<tr>
+<td><strong>Team members</strong></td>
+<td>[MEMBER 1] · [MEMBER 2] · [MEMBER 3] · [MEMBER 4] · [MEMBER 5]</td>
+</tr>
+<tr>
+<td><strong>Institution</strong></td>
+<td>[INSTITUTION / COLLEGE], [CITY, STATE]</td>
+</tr>
+<tr>
+<td><strong>Mentor(s)</strong></td>
+<td>[MENTOR NAME(S)]</td>
+</tr>
+<tr>
+<td><strong>Report status</strong></td>
+<td>Documents Phases 1–9, evidence frozen at model version <strong>ml-v0</strong></td>
+</tr>
+<tr>
+<td><strong>Date</strong></td>
+<td>[SUBMISSION DATE]</td>
+</tr>
+</tbody></table>
+<p style="margin-top:22px;font-size:9.5pt;color:#6B6457">Research prototype. Not an official IMD warning. All results are replays of observed satellite data on held-out days; no live or operational forecasting is claimed.</p>
+
+</div>
+
+<h2>Contents</h2>
+<ol>
+<li>Cover page · 2. Executive summary · 3. Problem statement · 4. Motivation and background · 5. Objectives · 6. Proposed solution · 7. Key innovation / differentiation · 8. Complete system workflow · 9. System architecture · 10. Technology stack · 11. Data sources · 12. Data pipeline · 13. Storm detection and tracking · 14. Forecasting methods · 15. ML model · 16. Validation methodology · 17. Results · 18. Real event validation · 19. Product / dashboard · 20. Historical replay · 21. Data health and uncertainty · 22. Testing and reproducibility · 23. Running the prototype · 24. Use cases / impact · 25. Limitations · 26. Future scope · 27. Conclusion · 28. References · 29. Appendices A–G</li>
+</ol>
+<p><strong>How to read this report.</strong></p>
+<ul>
+<li>Numbers are copied from frozen project files; the source is named beside each important value.</li>
+<li>Results are labelled <strong>OBSERVED RESULT</strong> (a measured number), <strong>INTERPRETATION</strong> (what we think it means) or <strong>LIMITATION</strong> (what it does not show).</li>
+<li>Items marked <strong>FUTURE</strong> or <strong>NOT IMPLEMENTED</strong> do not exist in the prototype.</li>
+</ul>
+<div class="pb"></div>
+
+<h1>2. Executive summary</h1>
+<p><strong>Problem.</strong> SIH26084 asks for 0–6 h nowcasting of thunderstorms, hail and cloudbursts at 1–3 km, from radar, satellite and lightning data, shown on a GIS dashboard. In practice there is no open, live Indian radar or lightning feed that a student team can train on or verify against:</p>
+<ul>
+<li>IMD Doppler-radar raw data needs a licence;</li>
+<li>the IMD AWS/ARG portal was closed to the public in May 2025;</li>
+<li>general MOSDAC users receive INSAT data with a 3-day latency.</li>
+</ul>
+<p><strong>Approach: satellite-first.</strong> We built the whole system around the one source that was openly obtainable: the <strong>NOAA/NCEP/CPC Globally Merged IR</strong> product (single ~11 µm channel, 4 km, 30 min). It is used as an approved fallback for Meteosat-9/INSAT. We forecast one verifiable target: <strong>where the cloud top will be colder than 235 K (deep convection)</strong>, 30 min to 6 h ahead, on a 2 km grid over NW India (26–34° N, 72–84° E).</p>
+<p><strong>Storm detection and tracking.</strong></p>
+<ul>
+<li>Cold-cloud objects are detected with tobac.</li>
+<li>The first tracks were audited before any cell-level result was used, and failed. Direction reversals were 47 %, and 20.6 % of cold links were likely identity switches.</li>
+<li>They were replaced by overlap-based tracking with a coldness-weighted centroid, which cut likely identity switches to 0.4 %.</li>
+</ul>
+<p><strong>Baseline forecasting.</strong> Persistence and pySTEPS motion extrapolation were scored on three held-out hail-report days: 14 May (E8), 4 May (E10) and 16 May 2026 (E11).</p>
+<ul>
+<li>pySTEPS beats persistence at <strong>every lead on all three days</strong>: pooled CSI 0.586 vs 0.511 at 30 min, and 0.258 vs 0.176 at 2 h.</li>
+<li>Useful skill lasts about <strong>90 min (persistence) and 120 min (pySTEPS)</strong>.</li>
+<li>An exact error decomposition shows that pySTEPS&#39; apparent over-forecasting at long leads is mainly a scoring-edge effect, not ignored storm decay.</li>
+<li>A decay-aware extension was stopped by a pre-declared rule, because the cell lifecycle trends did not persist.</li>
+</ul>
+<p><strong>ML probability prototype (ml-v0).</strong></p>
+<ul>
+<li><strong>Model:</strong> a histogram gradient-boosting classifier with isotonic calibration.</li>
+<li><strong>Data:</strong> trained on 14 days (18–31 May 2026) and calibrated on 7 days (6–12 May 2026); the three event days were held out.</li>
+<li><strong>Probability skill:</strong> the best of all methods out to about 4 h. Brier skill score is 0.67 / 0.51 / 0.27 / 0.13 at 30 min / 1 h / 2 h / 3 h, against 0.63 / 0.41 / 0.02 / −0.23 for a no-fit neighbourhood pySTEPS probability.</li>
+<li><strong>Calibration:</strong> good, with calibration error 0.002–0.004.</li>
+<li><strong>As a yes/no forecast at p ≥ 0.5</strong> it does <strong>not</strong> beat pySTEPS beyond 1 h.</li>
+<li><strong>Mechanism:</strong> it behaves mainly as a calibrated, lead-aware smoothing of pySTEPS. Storm-initiation skill is not demonstrated.</li>
+</ul>
+<p><strong>Replay, validation and decision support.</strong></p>
+<ul>
+<li><strong>Evidence freeze:</strong> all evidence (386 files) is frozen with SHA-256 hashes, and a test fails if any of it changes.</li>
+<li><strong>Web prototype:</strong> a static React + TypeScript + MapLibre app replays the frozen outputs across nine screens: event selection, situation, storm cells, 0–6 h forecast, alert center (exercise), historical replay, confidence, model performance and data health.</li>
+<li><strong>Replay view:</strong> three synced maps show what the system knew, what it predicted and what actually happened.</li>
+<li><strong>Labelling:</strong> every screen is marked REPLAY; the ML output is shown as a probability with its validated skill.</li>
+</ul>
+<p><strong>Limits.</strong></p>
+<ul>
+<li>Only 3 held-out days, all in May 2026 over NW India, and the ML test is backward in time.</li>
+<li>The input is a 30-min, single-channel IR source, with unverified parallax.</li>
+<li>There is no independent radar or lightning truth, and no live feed.</li>
+</ul>
+<div class="pb"></div>
+
+<h1>3. Problem statement</h1>
+<p>The official statement (SIH portal, PS ID <strong>SIH26084</strong>, MoES/NCMRWF; transcribed in the research report, Part 1) asks teams to:</p>
+<ul>
+<li><em>&quot;Build a real-time, convective-scale Nowcasting System (0–6 hour lead time) operating at a hyper-local 1–3 km spatial resolution&quot;</em>;</li>
+<li>design a system <em>&quot;rooted in Multi-Source Data Fusion architectures&quot;</em>;</li>
+<li><em>&quot;ingest high-frequency, heterogeneous meteorological streams, automatically detect early convective initiation, and dynamically forecast severe storm parameters&quot;</em>.</li>
+</ul>
+<p>The expected inputs are Doppler weather radar (reflectivity and velocity), geostationary satellite imagery (INSAT-3D/3DR thermal/IR bands) and ground-based lightning networks. The expected output is <em>&quot;a real-time, interactive GIS-mapped dashboard showcasing high-resolution (1–3 km) hazard zones with live countdown clocks for storm arrivals.&quot;</em></p>
+<table>
+<thead>
+<tr>
+<th>Requirement (PS)</th>
+<th>What this project delivers</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>0–6 h lead time</td>
+<td>Forecasts at 30, 60 … 360 min (30-min steps)</td>
+<td>Implemented; useful skill ≈ 2 h (baselines), BSS &gt; 0 to ≈ 4 h (ML)</td>
+</tr>
+<tr>
+<td>1–3 km resolution</td>
+<td>2 km common grid (effective ≈ 4 km, source resolution)</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Multi-source fusion (radar, satellite, lightning)</td>
+<td>Satellite IR only (NOAA CPC merged IR)</td>
+<td><strong>Partial</strong>: radar and lightning not openly available</td>
+</tr>
+<tr>
+<td>Convective initiation detection</td>
+<td>Not demonstrated</td>
+<td><strong>Not implemented</strong></td>
+</tr>
+<tr>
+<td>Thunderstorm / deep-convection nowcast</td>
+<td>BT &lt; 235 K probability and deterministic forecasts</td>
+<td>Implemented and validated on 3 days</td>
+</tr>
+<tr>
+<td>Lightning density, hail probability, downburst velocity, cloudburst thresholds</td>
+<td>No hazard-specific truth available</td>
+<td><strong>Not implemented</strong>; no skill claimed</td>
+</tr>
+<tr>
+<td>GIS dashboard</td>
+<td>React + MapLibre replay prototype, 9 screens</td>
+<td>Implemented (replay only)</td>
+</tr>
+<tr>
+<td>Live countdown clocks / real time</td>
+<td>Replay of observed data; latency not modelled</td>
+<td><strong>Not implemented</strong> (future)</td>
+</tr>
+<tr>
+<td>Users: local administrations, aviation, farming</td>
+<td>Exercise advisories (CAP 1.2, status=Exercise)</td>
+<td>Prototype only; alert skill not verified</td>
+</tr>
+</tbody></table>
+<p><strong>Target hazards and the scope decision.</strong> The PS lists thunderstorms, lightning, hail, downbursts and cloudbursts. We scoped the verifiable part to <strong>deep convection</strong>, defined as cloud-top brightness temperature (BT) below 235 K (VALIDATION_PLAN §2). It can be verified from the satellite field itself. The other hazards need truth data (radar, lightning, hail pads, rain gauges) that were not openly available. They are treated as future work, and no skill is claimed for them.</p>
+<h1>4. Motivation and background</h1>
+<p><strong>Why 0–6 h convective forecasting is hard.</strong> Convective cells form, grow and decay within tens of minutes to a few hours. Extrapolation methods (moving the current field along its motion) cannot create new storms or model decay, so their skill falls quickly with lead time. The PRD expected skill to decay after about 1–2 h, and the project measured this directly: useful extrapolation skill ends at about 2 h (Section 17).</p>
+<p><strong>Why the data situation matters in India</strong> (research report Part 6, verified at the time of writing):</p>
+<ul>
+<li><strong>Radar:</strong> IMD Doppler weather radar (DWR) raw volumes need a licence or MoES research request (DATA_REALITY: <em>UNAVAILABLE / RESTRICTED</em>).</li>
+<li><strong>Station data:</strong> the IMD AWS/ARG portal was locked to the public in May 2025.</li>
+<li><strong>INSAT via MOSDAC:</strong> registered general users get limited datasets with a <strong>3-day latency</strong>; near-real-time access is for privileged users only.</li>
+<li><strong>Lightning:</strong> Blitzortung&#39;s terms forbid use in storm-warning systems. ISS-LIS ended on 16 Nov 2023. NRSC and IITM networks need research access.</li>
+<li><strong>Operational nowcasting:</strong> IMD&#39;s radar-based nowcasts (WDSS-II) cover radar-served cities, 156 per the research report.</li>
+</ul>
+<p>A design that depends on radar or lightning cannot be built and verified openly. A <strong>satellite-first</strong> design can.</p>
+<p><strong>Existing operational context.</strong> Storm-lifecycle and cell-hazard systems already exist: NWCSAF RDT-CW, MeteoSwiss TRT and NOAA ProbSevere v3 (research report Part 9; REVIEW_AND_SCOPE R6). The concept is therefore <strong>not novel</strong>. The project&#39;s contribution is a verified, reproducible, satellite-only implementation on Indian storm days, with its limits stated (Section 7).</p>
+<h1>5. Objectives</h1>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Objective (measurable)</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>O1</td>
+<td>Build a reproducible real-data pipeline: download → QC → 2 km grid → cells, with SHA-256 provenance</td>
+<td><strong>Achieved.</strong> Byte-identical reruns; raw-file manifest with URL, Last-Modified, size, SHA-256</td>
+</tr>
+<tr>
+<td>O2</td>
+<td>Detect and track convective cells, and audit tracking quality before using cell-level metrics</td>
+<td><strong>Achieved.</strong> v1 tracks rejected by the audit; v2 overlap tracking cut ID-switch candidates 0.206 → 0.004 (E8)</td>
+</tr>
+<tr>
+<td>O3</td>
+<td>Produce and verify persistence and pySTEPS forecasts at 30–360 min</td>
+<td><strong>Achieved.</strong> 45 issue times per day, 12 leads, CSI/POD/FAR/bias/FSS</td>
+</tr>
+<tr>
+<td>O4</td>
+<td>Test whether baseline findings generalise to 2–3 more real events, with uncertainty</td>
+<td><strong>Achieved.</strong> E10 and E11 added (E8a excluded by rule); block-bootstrap intervals</td>
+</tr>
+<tr>
+<td>O5</td>
+<td>Explain the remaining forecast error and test a decay-aware extension</td>
+<td><strong>Diagnosis achieved.</strong> Extension <strong>stopped</strong> by a pre-declared reliability rule</td>
+</tr>
+<tr>
+<td>O6</td>
+<td>Train a lightweight, leakage-safe ML model and evaluate it once on held-out days against the baselines</td>
+<td><strong>Achieved.</strong> ml-v0 evaluated on E8/E10/E11; calibrated probabilities</td>
+</tr>
+<tr>
+<td>O7</td>
+<td>Freeze all evidence and guard it with tests</td>
+<td><strong>Achieved.</strong> 386 files hashed; freeze-guard test</td>
+</tr>
+<tr>
+<td>O8</td>
+<td>Deliver a working replay prototype of the dashboard</td>
+<td><strong>Achieved.</strong> 9 screens; build, unit and browser tests pass</td>
+</tr>
+</tbody></table>
+<h1>6. Proposed solution</h1>
+<p>StormLife Nowcast is a pipeline that turns raw geostationary IR frames into verified forecasts and a replayable decision-support view:</p>
+<ol>
+<li><strong>Ingest</strong> NOAA CPC merged-IR hourly files (two half-hour fields each). Every file is recorded in a manifest with its SHA-256.</li>
+<li><strong>Quality-control and regrid.</strong> Decode brightness temperature, fill tiny gaps (≤ 4 native pixels, flagged), and regrid onto a 2 km Lambert azimuthal equal-area (LAEA) grid of 453 × 603 pixels. Each frame gets a QC status.</li>
+<li><strong>Detect and track cells.</strong> tobac detects cold-cloud features and segments cells colder than 245 K. The v2 tracker links cells frame to frame by area overlap and assigns a coldness-weighted centroid. Lifecycle diagnostics include min BT, area, cold-core area, ΔBT and phase rules v0 (proposed).</li>
+<li><strong>Forecast</strong> the 2 km BT field 30–360 min ahead with three methods:<ul>
+<li><strong>persistence</strong> (no change);</li>
+<li><strong>pySTEPS</strong> (Lucas–Kanade motion + semi-Lagrangian advection);</li>
+<li><strong>ML (ml-v0)</strong>: a calibrated probability that BT &lt; 235 K.</li>
+</ul>
+</li>
+<li><strong>Verify</strong> every method on identical pixels of held-out days: CSI, POD, FAR, bias, FSS, Brier skill score and reliability, with block-bootstrap uncertainty.</li>
+<li><strong>Freeze</strong> the evidence (386 files, SHA-256).</li>
+<li><strong>Build static replay bundles</strong> from the frozen files only, checking each file&#39;s hash.</li>
+<li><strong>Replay</strong> the bundles in a React + MapLibre dashboard with honest labels. Forecasters can approve or reject exercise advisories (CAP 1.2, status=Exercise).</li>
+</ol>
+<h1>7. Key innovation / differentiation</h1>
+<p>These are the project&#39;s defensible differentiators. None is claimed to be universally novel. Operational systems with related concepts exist (Section 4).</p>
+<table>
+<thead>
+<tr>
+<th>Differentiator</th>
+<th>What was actually done</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Satellite-first workflow</strong></td>
+<td>End-to-end system on openly obtainable geostationary IR, with no simulated radar or lightning</td>
+<td>FIRST_EVENT; DATA_REALITY; Section 11</td>
+</tr>
+<tr>
+<td><strong>Reproducible real-event validation</strong></td>
+<td>Real hail-report days, selected by a rule fixed before scoring; 386 evidence files hash-frozen</td>
+<td>MULTI_EVENT §1; FREEZE_ml-v0.json</td>
+</tr>
+<tr>
+<td><strong>Baseline-relative evaluation</strong></td>
+<td>Every method scored against persistence and pySTEPS on the same pixels. Negative results reported (yes/no ML, decay model stop)</td>
+<td>BASELINE_EVAL; ML_PROTOTYPE; DECAY_AWARE</td>
+</tr>
+<tr>
+<td><strong>Lifecycle / tracking audit</strong></td>
+<td>Tracks audited before cell-level use; v1 rejected, v2 overlap tracking adopted</td>
+<td>TRACKING_AUDIT</td>
+</tr>
+<tr>
+<td><strong>Calibrated ML probability prototype</strong></td>
+<td>Isotonic calibration on validation days only; reliability and ECE reported on held-out days</td>
+<td>ML_PROTOTYPE §3</td>
+</tr>
+<tr>
+<td><strong>Uncertainty / data-health visibility</strong></td>
+<td>Per-frame QC, source status, unscorable fraction, within-event intervals shown in the UI</td>
+<td>Data Health and Confidence screens</td>
+</tr>
+<tr>
+<td><strong>Historical replay</strong></td>
+<td><em>Knew / predicted / happened</em> panes with a method toggle, using only data available at issue time</td>
+<td>REPLAY_SPEC; PRODUCT_DEMO</td>
+</tr>
+<tr>
+<td><strong>Explainable decision-support interface</strong></td>
+<td>Every forecast shows its validated skill at that lead, evidence level and envelope. Advisories require human approval</td>
+<td>UI_UX_SPEC; Section 19</td>
+</tr>
+</tbody></table>
+<div class="pb"></div>
+
+<h1>8. Complete system workflow</h1>
+<pre class="mermaid">flowchart TB
+  subgraph A1["1 · Data sources, ingestion and quality control"]
+    direction LR
+    S["DATA SOURCES<br/>NOAA/NCEP/CPC Globally Merged IR<br/>(4 km, 30 min) · IMD hail report<br/>(event selection only)"] --> I["Data ingestion<br/>HTTPS download, resume,<br/>SHA-256 manifest"] --> Q["Quality control /<br/>missing-data detection<br/>BT 170–330 K · fail if &gt; 5 % missing<br/>gaps ≤ 4 px filled + flagged"]
+  end
+  subgraph A2["2 · Satellite IR preprocessing and common grid"]
+    direction LR
+    P["Satellite IR preprocessing<br/>decode 1-byte BT,<br/>crop to domain"] --> G["Common 2 km grid<br/>LAEA 453 × 603 px<br/>NW India 26–34° N, 72–84° E"]
+  end
+  subgraph A3["3 · Objects: detection, tracking, lifecycle"]
+    direction LR
+    D["Cloud / convective<br/>object detection<br/>tobac 273…208 K · segments &lt; 245 K"] --> T["Storm cell tracking<br/>v2 overlap linking (≥ 0.2)<br/>coldness-weighted centroid"] --> L["Lifecycle / motion<br/>diagnostics<br/>min BT · area · ΔBT · phase v0"]
+  end
+  subgraph A4["4 · Forecast generation, 30–360 min (reads the 2 km gridded BT)"]
+    direction LR
+    F1["Persistence"]
+    F2["pySTEPS advection<br/>Lucas–Kanade +<br/>semi-Lagrangian"]
+    F3["ML probability model<br/>HistGradientBoosting"] --> C["Calibration /<br/>probability generation<br/>isotonic per lead bin"]
+    F1 ~~~ F2 ~~~ F3
+  end
+  subgraph A5["5 · Validation, freeze and delivery"]
+    direction LR
+    V["Validation &amp; metrics<br/>CSI · POD · FAR · bias<br/>FSS · BSS · reliability"] --> Z["Evidence freeze<br/>386 files SHA-256"] --> R["Replay bundle<br/>tiles · GeoJSON · JSON"] --> W["React + MapLibre<br/>dashboard (9 screens)"] --> H["Human decision support<br/>exercise advisory<br/>CAP 1.2 status=Exercise"]
+  end
+  A1 --> A2 --> A3 --> A4 --> A5</pre><p><em>Figure 1 (Diagram 1).</em> End-to-end system flowchart. Source: <code>docs/DIAGRAMS.md</code>.</p>
+<div class="pb"></div>
+
+<h1>9. System architecture</h1>
+<pre class="mermaid">flowchart TB
+  subgraph DATA["DATA LAYER"]
+    direction LR
+    d1["NOAA/NCEP/CPC merged IR<br/>600 hourly files · 25 days<br/>SHA-256 manifest"]
+    d2["Real event days<br/>E8 · E10 · E11<br/>(E8a excluded)"]
+    d3["IMD hail-report PDF<br/>(archived) + geocoded places"]
+    d4["Processed 2 km NetCDF cubes<br/>Parquet ML dataset<br/>CSV / JSON outputs"]
+    d1 ~~~ d2 ~~~ d3 ~~~ d4
+  end
+  subgraph PROC["PROCESSING LAYER"]
+    direction LR
+    p1["Python 3.11<br/>NumPy · pandas · SciPy"]
+    p2["xarray · netCDF4<br/>pyarrow · pyproj"]
+    p3["scikit-image<br/>Pillow"]
+    p4["tobac 1.6.2 + trackpy + numba<br/>v2 overlap tracker + audit"]
+    p5["pySTEPS 1.21.5<br/>+ OpenCV"]
+    p1 ~~~ p2 ~~~ p3 ~~~ p4 ~~~ p5
+  end
+  subgraph MODEL["MODEL LAYER"]
+    direction LR
+    m1["Persistence<br/>baseline"]
+    m2["pySTEPS<br/>advection"]
+    m3["Neighbourhood pySTEPS<br/>(no-fit reference)"]
+    m4["HistGradientBoosting<br/>+ isotonic calibration"]
+    m5["Frozen model<br/>ml-v0"]
+    m1 ~~~ m2 ~~~ m3 ~~~ m4 ~~~ m5
+  end
+  subgraph VAL["VALIDATION LAYER"]
+    direction LR
+    v1["CSI · POD<br/>FAR · bias"]
+    v2["FSS<br/>10 / 20 / 40 km"]
+    v3["BSS · reliability<br/>ECE"]
+    v4["Block bootstrap<br/>event-day bootstrap"]
+    v5["Leakage + reproducibility<br/>tests · freeze guard"]
+    v1 ~~~ v2 ~~~ v3 ~~~ v4 ~~~ v5
+  end
+  subgraph PROD["PRODUCT LAYER"]
+    direction LR
+    r1["Replay bundle<br/>builder (Python)"]
+    r2["React 18 · TypeScript 5<br/>Vite 5"]
+    r3["MapLibre GL 4 · plain CSS<br/>Esri basemap (display)"]
+    r4["Static replay bundles<br/>(no backend)"]
+    r5["Vitest<br/>Playwright"]
+    r1 ~~~ r2 ~~~ r3 ~~~ r4 ~~~ r5
+  end
+  subgraph OUT["OUTPUT LAYER"]
+    direction LR
+    o1["Situation<br/>Dashboard"]
+    o2["Storm Cell Tracker<br/>+ details"]
+    o3["0–6 h<br/>Forecast"]
+    o4["Historical<br/>Replay"]
+    o5["Model<br/>Performance"]
+    o6["Confidence ·<br/>Data Health"]
+    o7["Alert Center<br/>(exercise)"]
+    o1 ~~~ o2 ~~~ o3 ~~~ o4 ~~~ o5 ~~~ o6 ~~~ o7
+  end
+  subgraph NU["NOT USED in Phases 1–9 — reference / future only"]
+    direction LR
+    n1["SatPy · rasterio<br/>MetPy"]
+    n2["Tailwind CSS<br/>deck.gl"]
+    n3["LightGBM · FastAPI<br/>PostGIS"]
+    n4["Meteosat-9 / INSAT-3DS<br/>radar · lightning"]
+    n1 ~~~ n2 ~~~ n3 ~~~ n4
+  end
+  DATA --> PROC --> MODEL --> VAL --> PROD --> OUT
+  OUT ~~~ NU
+  classDef future fill:#f2f2f2,stroke:#999,stroke-dasharray: 5 5,color:#666;
+  class NU,n1,n2,n3,n4 future;</pre><p><em>Figure 2 (Diagram 2).</em> Layered architecture. Solid layers contain only technologies used in Phases 1–9. The dashed box lists technologies named in the PRD/ARCHITECTURE that were <strong>not</strong> used: SatPy, rasterio, MetPy, Tailwind CSS, deck.gl, LightGBM, FastAPI, PostGIS.</p>
+<p><strong>Layer notes:</strong></p>
+<ul>
+<li><strong>Data layer.</strong><ul>
+<li>600 hourly raw files over 25 days (the 4 event days E8/E8a/E10/E11 plus 21 training/validation days), about 16 GB.</li>
+<li>Processed outputs are NetCDF cubes, Parquet ML rows and CSV/JSON metric tables.</li>
+</ul>
+</li>
+<li><strong>Processing layer.</strong><ul>
+<li>Python 3.11.</li>
+<li>tobac 1.6.2 uses trackpy for linking, with numba for speed.</li>
+<li>pySTEPS 1.21.5 was built from the PyPI source with <code>-fopenmp</code> removed; there is no macOS arm64 wheel and Apple clang has no OpenMP. This affects only multithreading of code paths the project does not use.</li>
+</ul>
+</li>
+<li><strong>Model layer.</strong> Two deterministic baselines, a no-fit neighbourhood reference and one ML model (ml-v0), frozen.</li>
+<li><strong>Validation layer.</strong> Metric code in <code>ml/verification/scores.py</code>. The FSS equals the pySTEPS implementation (tested).</li>
+<li><strong>Product layer.</strong> A static site. There is no backend server and no database; the bundles are plain files.</li>
+<li><strong>Output layer.</strong> Nine screens (Section 19).</li>
+</ul>
+<h1>10. Technology stack</h1>
+<p>Status legend:</p>
+<ul>
+<li><strong>Implemented:</strong> code written in this project.</li>
+<li><strong>Used:</strong> third-party library or service used at run time.</li>
+<li><strong>Reference:</strong> named in project docs but not used.</li>
+<li><strong>Future:</strong> planned, not built.</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>Technology (version)</th>
+<th>Purpose</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Programming</td>
+<td>Python 3.11.16 (uv virtual environment)</td>
+<td>All data, tracking, forecasting, ML and verification code</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Programming</td>
+<td>TypeScript 5.9.3</td>
+<td>Web prototype source</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Programming</td>
+<td>Node.js 26.7.0 / npm 11.19.0</td>
+<td>Web build tooling</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Data processing</td>
+<td>NumPy 2.4.6 · pandas 3.0.6 · SciPy 1.17.1</td>
+<td>Arrays, tables, filters (neighbourhood fractions, FSS)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Data processing</td>
+<td>xarray 2026.7.0 · netCDF4 1.7.4</td>
+<td>Gridded cubes and forecast files (NetCDF)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Data processing</td>
+<td>pyarrow 25.0.1</td>
+<td>Parquet (ML dataset, tobac features)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Data processing</td>
+<td>PyYAML 6.0.3 · requests 2.34.2</td>
+<td>Configs; HTTPS download with resume</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Weather / scientific</td>
+<td>pyproj 3.7.2</td>
+<td>LAEA grid, reprojection to the display grid, geodesic motion</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Weather / scientific</td>
+<td>pySTEPS 1.21.5 (local build) + OpenCV 5.0.0.93</td>
+<td>Lucas–Kanade motion, semi-Lagrangian extrapolation, FSS cross-check</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Tracking</td>
+<td>tobac 1.6.2 · trackpy 0.7 · numba 0.67.0</td>
+<td>Multi-threshold feature detection, 245 K segmentation, v1 linking</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Tracking</td>
+<td>v2 overlap tracker (<code>ml/tracking/overlap_link.py</code>)</td>
+<td>Overlap linking, merge/split events, coldness centroid</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Tracking</td>
+<td>scikit-image 0.26.0</td>
+<td>Segmentation support (tobac) and contour extraction for map polygons</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>ML</td>
+<td>scikit-learn 1.9.1: <code>HistGradientBoostingClassifier</code>, <code>IsotonicRegression</code></td>
+<td>ML probability model and calibration</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>ML</td>
+<td>joblib 1.6.0</td>
+<td>Model serialisation (frozen artifacts)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Visualization</td>
+<td>matplotlib 3.11.2</td>
+<td>Scientific figures (figs 1–21)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Visualization</td>
+<td>Pillow 12.3.0</td>
+<td>8-bit data tiles for the web bundles</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>React 18.3.1 · react-dom 18.3.1</td>
+<td>Dashboard UI (9 screens)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td>Plain CSS with UI_UX_SPEC design tokens · IBM Plex fonts (Google Fonts)</td>
+<td>Styling</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Mapping</td>
+<td>MapLibre GL JS 4.7.1</td>
+<td>Map, raster image source, GeoJSON cells/contours, synced replay panes</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Mapping</td>
+<td>Esri World Light Gray Canvas tiles</td>
+<td>Basemap (display only; can be switched off)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Geocoding</td>
+<td>OpenStreetMap Nominatim</td>
+<td>Geocoding the IMD hail-report place names</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>Files: NetCDF, Parquet, CSV, JSON, GeoJSON, PNG, joblib</td>
+<td>All data and outputs; SHA-256 manifests</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>PostGIS / any database</td>
+<td>Planned in ARCHITECTURE</td>
+<td>Future</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>pytest 9.1.1</td>
+<td>77 Python tests (76 pass, 1 skip)</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Vitest 2.1.9</td>
+<td>6 web unit tests</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Testing</td>
+<td>Playwright 1.63.0 (headless Chromium)</td>
+<td>2 end-to-end browser tests of the demo flow</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Build / deployment</td>
+<td>Vite 5.4.21 · @vitejs/plugin-react 4.7.0</td>
+<td>Type-checked production build and local preview</td>
+<td>Used</td>
+</tr>
+<tr>
+<td>Build / deployment</td>
+<td>Docker, FastAPI, cloud hosting</td>
+<td>Planned in ARCHITECTURE</td>
+<td>Future</td>
+</tr>
+<tr>
+<td>Reference only</td>
+<td>SatPy, rasterio, MetPy, xskillscore</td>
+<td>Named in ARCHITECTURE; not installed</td>
+<td>Reference</td>
+</tr>
+<tr>
+<td>Reference only</td>
+<td>Tailwind CSS, deck.gl</td>
+<td>Named in ARCHITECTURE/UI spec; plain CSS and MapLibre layers used instead</td>
+<td>Reference</td>
+</tr>
+<tr>
+<td>Reference only</td>
+<td>LightGBM, PyTorch, SHAP</td>
+<td>LightGBM replaced by scikit-learn&#39;s histogram GBDT (same family); no deep learning</td>
+<td>Reference</td>
+</tr>
+</tbody></table>
+<p><em>Table 1.</em> Technology stack. Versions come from the project environment (<code>requirements.txt</code>, <code>apps/web/package.json</code>, <code>docs/FREEZE_ml-v0.json</code>).</p>
+<div class="pb"></div>
+
+<h1>11. Data sources</h1>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>Data type</th>
+<th>Time step</th>
+<th>Grid</th>
+<th>Period used</th>
+<th>Usage</th>
+<th>Limitations</th>
+<th>Reproducibility</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>NOAA/NCEP/CPC Globally Merged IR</strong> (<code>ftp.cpc.ncep.noaa.gov/precip/global_full_res_IR/</code>)</td>
+<td>Merged geostationary window-channel IR BT (~11 µm), 1-byte (BT − 75 K), 255 = missing</td>
+<td>30 min (2 fields per hourly file)</td>
+<td>4 km (regridded to 2 km)</td>
+<td>1, 4, 6–12, 14, 16, 18–31 May 2026 (25 days, 600 hourly files ≈ 16 GB)</td>
+<td><strong>All model inputs and verification truth</strong></td>
+<td>Single channel; 30-min cadence; archive on the server starts 30–31 Mar 2026 then 1 May (<strong>no April 2026</strong>); satellite ID code 5 unverified; parallax status unverified</td>
+<td><code>data/raw/cpc_merged_ir/manifest.json</code>: URL, HTTP Last-Modified, bytes, SHA-256 per file; <code>pipelines.ingest.cpc_merged_ir</code></td>
+</tr>
+<tr>
+<td>CPC satellite-ID file (<code>geomerg_satid_202605.Z</code>)</td>
+<td>Satellite contributing each pixel</td>
+<td>Monthly file</td>
+<td>4 km</td>
+<td>May 2026</td>
+<td>Diagnostic (one satellite, code 5, covers the domain)</td>
+<td>Code-to-satellite mapping NEEDS VERIFICATION</td>
+<td>Same manifest</td>
+</tr>
+<tr>
+<td><strong>IMD RMC New Delhi hail-storm report</strong> (PDF, updated 16 May 2026)</td>
+<td>Hail occurrence by date and place</td>
+<td>Daily (date only, no time)</td>
+<td>Town names</td>
+<td>Feb–May 2026</td>
+<td><strong>Event-day selection and map context only</strong>, never verification truth</td>
+<td>Place/state column layout lost in text extraction; reports incomplete; no times</td>
+<td>Archived as <code>hailstorm_report_face59166ab1.pdf</code> with SHA-256</td>
+</tr>
+<tr>
+<td>OpenStreetMap Nominatim</td>
+<td>Place coordinates</td>
+<td>—</td>
+<td>Point</td>
+<td>—</td>
+<td>Geocoding report places</td>
+<td>Some names not found (Shirsi; Jubbarhatti, Hindon AFS; Tungnath)</td>
+<td>Cached in <code>data/raw/hail_reports/geocoded_*.json</code></td>
+</tr>
+<tr>
+<td>Esri World Light Gray Canvas</td>
+<td>Basemap tiles</td>
+<td>—</td>
+<td>Web tiles</td>
+<td>—</td>
+<td>Display context only</td>
+<td>Terms for public deployment and boundary depiction NEEDS VERIFICATION</td>
+<td>Online; can be switched off</td>
+</tr>
+<tr>
+<td>Meteosat-9 IODC SEVIRI</td>
+<td>Multi-channel 15-min imagery</td>
+<td>15 min</td>
+<td>~3 km nadir</td>
+<td>—</td>
+<td>Planned primary</td>
+<td>Not connected (no EUMETSAT token)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>INSAT-3DR / 3DS (MOSDAC)</td>
+<td>Multi-channel imagery</td>
+<td>30 min (15 min staggered)</td>
+<td>1–8 km by channel</td>
+<td>—</td>
+<td>Planned</td>
+<td>Not connected; 3-day latency for general users</td>
+<td>—</td>
+</tr>
+<tr>
+<td>IMD DWR radar; lightning networks</td>
+<td>Reflectivity; flashes</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Planned independent truth</td>
+<td>Unavailable / restricted</td>
+<td>—</td>
+</tr>
+</tbody></table>
+<p><em>Table 2.</em> Data sources. The only data inputs are the CPC merged IR frames.</p>
+<p><strong>Source substitution.</strong></p>
+<ul>
+<li>The approved satellite routes in DATA_REALITY (Meteosat-9 IODC via EUMETSAT; INSAT via MOSDAC) need credentials that were not available. EUMETSAT download returned HTTP 404 without a token, and there was no MOSDAC account.</li>
+<li>The CPC merged-IR product was therefore adopted in Phase 1 as an approved fallback. It was kept for all later phases, where the instructions were &quot;keep NOAA IR as the approved Phase-1 fallback; do not acquire new satellite sources&quot;.</li>
+<li>Consequences: no water-vapour, visible or tri-spectral channels, and a 30-min cadence instead of 15 min.</li>
+<li>Long-term archive access for older years (e.g. NASA GES DISC GPM_MERGIR, which needs an Earthdata login) was not verified.</li>
+</ul>
+<h1>12. Data pipeline</h1>
+<pre class="mermaid">flowchart TB
+  subgraph B1["1 · Build the dataset (per calendar day)"]
+    direction LR
+    A["NOAA CPC raw<br/>hourly files"] --> B["Daily 2 km cube<br/>48 frames · QC flags"] --> C["Issue times<br/>01:00–23:00 UTC (45)"] --> F["17 features per pixel &amp; lead<br/>pySTEPS BT + neighbourhood<br/>fractions · BT(t) · tendency<br/>motion · hour · lead"] --> H["Stratified pixel sampling<br/>150 event · 150 near-cold · 60 far<br/>inverse-probability weights<br/>target: BT(t+L) &lt; 235 K"]
+  end
+  subgraph B2["2 · Calendar-day split (event days ± 1 day excluded)"]
+    direction LR
+    TRd["TRAIN<br/>18–31 May 2026<br/>14 days · 1,467,318 rows"]
+    VAd["VALIDATION<br/>6–12 May 2026<br/>7 days · 856,830 rows"]
+    TEd["TEST (held out)<br/>E8 14 May · E10 4 May<br/>E11 16 May · never read"]
+    TRd ~~~ VAd ~~~ TEd
+  end
+  subgraph B3["3 · Train, select, calibrate, freeze"]
+    direction LR
+    GATE["Sufficiency gate<br/>≥ 7 convective train days<br/>≥ 3 validation → 7 and 5: PROCEED"] --> TR["Fit HistGradientBoosting<br/>(fixed settings)"] --> NI["n_iter by validation<br/>log-loss → 216"] --> ISO["Isotonic calibration<br/>per lead bin (validation)"] --> FZ["ml-v0 frozen<br/>SHA-256"]
+  end
+  subgraph B4["4 · Held-out evaluation (run once)"]
+    direction LR
+    EV["Frozen model on E8 · E10 · E11"] --> M["CSI · FSS · bias · BSS · reliability<br/>identical pixels vs persistence,<br/>pySTEPS, neighbourhood pySTEPS"]
+  end
+  B1 --> B2 --> B3 --> B4</pre><p><em>Figure 3 (Diagram 3).</em> Data / ML pipeline, including the calendar-day splits used for the ML prototype.</p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Implementation</th>
+<th>Settings (frozen)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Raw satellite data</td>
+<td>Hourly <code>.Z</code> files, two half-hour fields each; parallel HTTPS download with resume and file-locked manifest</td>
+<td>Resume via HTTP Range; total size checked</td>
+</tr>
+<tr>
+<td>Decoding</td>
+<td>1-byte value + 75 → BT in K; 255 → missing; rows north → south</td>
+<td><code>pipelines/preprocess/decode.py</code></td>
+</tr>
+<tr>
+<td>Missing-data handling</td>
+<td>Source gaps of ≤ 4 connected native pixels filled from valid 8-neighbours and flagged in a <code>gapfilled</code> mask; larger gaps stay missing</td>
+<td>E8: 0.8–6.1 % missing per frame before fill, 0.6–5.4 % after</td>
+</tr>
+<tr>
+<td>Projection / grid</td>
+<td>NaN-aware bilinear regridding (normalised weights, minimum weight 0.5) onto LAEA (centre 30° N, 78° E), 2 km</td>
+<td>453 × 603 px; <code>in_domain</code> mask for 26–34° N, 72–84° E; effective resolution ≈ 4 km</td>
+</tr>
+<tr>
+<td>Frame QC</td>
+<td>Status <code>OK</code> if in-domain missing ≤ 5 % and all BT in 170–330 K; otherwise <code>QC_FAIL</code></td>
+<td>Failed frames are <strong>kept and flagged</strong>, not dropped (E8: 6, E10: 9, E11: 0)</td>
+</tr>
+<tr>
+<td>Cloud-top temperature</td>
+<td>BT field per 30-min frame (48 frames per day, 00:00–23:30 UTC)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Convective thresholds</td>
+<td>Deep convection = BT &lt; 235 K (forecast target); cell segmentation &lt; 245 K; cold core &lt; 221 K</td>
+<td>VALIDATION_PLAN §2; <code>config/tracking.yaml</code>; <code>config/phases.yaml</code></td>
+</tr>
+<tr>
+<td>Object detection</td>
+<td>tobac multi-threshold features at 273 / 253 / 235 / 221 / 208 K</td>
+<td>Minimum size 25 px at 273 K, 8 px at 253 K, 4 px colder</td>
+</tr>
+<tr>
+<td>Tracking</td>
+<td>v1 tobac/trackpy (rejected by audit); v2 overlap linking of &lt; 245 K segments (adopted)</td>
+<td>Section 13</td>
+</tr>
+<tr>
+<td>Forecast input</td>
+<td>2 km BT cube (grid methods); cell tables (object diagnostics, dashboard)</td>
+<td>Issue times 01:00–23:00 UTC: 45 per day</td>
+</tr>
+</tbody></table>
+<p><em>Table 3.</em> Data-pipeline steps and settings. Sources: FIRST_EVENT, BASELINE_EVAL, <code>config/*.yaml</code>.</p>
+<p><strong>LIMITATION: parallax.</strong> Missing pixels line cloud edges. That pattern is consistent with holes left by a parallax shift in the merged product. Whether the product is already parallax-corrected is <strong>not verified</strong>. The project applies no parallax correction, so cloud-top positions may be displaced for tall clouds.</p>
+<h1>13. Storm detection and tracking</h1>
+<p><strong>Cold-cloud object detection (tobac 1.6.2).</strong></p>
+<ul>
+<li><strong>Features:</strong> detected on BT at thresholds 273, 253, 235, 221 and 208 K (target = minimum).</li>
+<li><strong>Minimum sizes:</strong> 25 px at 273 K (100 km²), 8 px at 253 K, 4 px at colder levels. At 4 px the 273 K level produced 3,581 small warm fragments on 14 May, which made trackpy&#39;s linking fail.</li>
+<li><strong>Segmentation:</strong> watershed at 245 K.</li>
+<li><strong>v1 linking:</strong> trackpy <code>random</code> method, v_max 30 m/s, 2-frame minimum. The trackpy subnetwork cap was raised to 50 (Phase 4) after 1 May produced a 34-point subnetwork; E8 tracks re-ran byte-identically.</li>
+<li><strong>v1 merge/split:</strong> tobac <code>merge_split_MEST</code> at 25 km.</li>
+</ul>
+<p><strong>Tracking audit (Phase 3).</strong> Before any cell-level result was used, the v1 tracks were audited on E8. The metrics:</p>
+<ul>
+<li><strong>direction reversals:</strong> the share of consecutive steps that reverse direction (random = 0.5);</li>
+<li><strong>ID-switch candidates:</strong> another object overlaps the parent more than the linked one;</li>
+<li><strong>zero-overlap links;</strong></li>
+<li><strong>area jumps:</strong> more than 2× between frames;</li>
+<li><strong>correlation with the pySTEPS flow.</strong></li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Audit metric (E8)</th>
+<th>v1 tobac tracks</th>
+<th>v2 overlap tracks (adopted)</th>
+<th>v2 flow-shifted variant</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Cells (≥ 2 h)</td>
+<td>613 (181)</td>
+<td>88 (23)</td>
+<td>95 (22)</td>
+</tr>
+<tr>
+<td>Direction reversals (random = 0.5)</td>
+<td>0.47 (0.38 cold rows only)</td>
+<td>0.35</td>
+<td>0.27</td>
+</tr>
+<tr>
+<td>ID-switch candidates (fraction of cold links)</td>
+<td>0.206</td>
+<td>0.004</td>
+<td>0.127</td>
+</tr>
+<tr>
+<td>Zero-overlap links</td>
+<td>0.057</td>
+<td>0 (guaranteed by the rule)</td>
+<td>0</td>
+</tr>
+<tr>
+<td>Area jumps &gt; 2×</td>
+<td>0.40</td>
+<td>0.28</td>
+<td>0.29</td>
+</tr>
+</tbody></table>
+<p><em>Table 4.</em> Tracking audit before and after the fixes. Source: <code>data/processed/E8_20260514/audit/audit_*.json</code>; TRACKING_AUDIT.</p>
+<p><strong>OBSERVED RESULT: v1 problems.</strong></p>
+<ul>
+<li>81 % of tracked rows were warm features.</li>
+<li>15.5 % of steps changed detection level; those steps moved a median 28.5 km, against 19.9 km otherwise.</li>
+<li>Members of the same merge/split family present at the same time were a median 68 km apart (maximum 221 km).</li>
+<li>Nearest-feature truth biased the Phase-2 object results toward persistence.</li>
+</ul>
+<p><strong>Fixes (v2, implemented in <code>ml/tracking/overlap_link.py</code>).</strong></p>
+<ol>
+<li>Only cold segments (&lt; 245 K) are treated as storms.</li>
+<li><strong>Overlap linking.</strong> A cell continues into the next-frame segment with mutual best overlap. Overlap is measured relative to the smaller object and must be at least 0.2. Extra overlaps are recorded once each as MERGE or SPLIT events, and families are built from them. Linking uses only the current and next frame.</li>
+<li><strong>Coldness-weighted centroid.</strong> Pixels are weighted by 245 K − BT, which steadies the position.</li>
+</ol>
+<p>Overlap thresholds of 0.1–0.3 gave essentially the same results.</p>
+<p><strong>Motion estimation.</strong></p>
+<ul>
+<li>Cell step motion (speed, heading) comes from consecutive centroids. It remains jittery (27–35 % reversals).</li>
+<li>The dashboard&#39;s motion arrows therefore use the pySTEPS <strong>field</strong> motion: the cell centre advected 30 min by the Lucas–Kanade field.</li>
+</ul>
+<p><strong>On the other events</strong> (MULTI_EVENT §6), E10 / E11:</p>
+<ul>
+<li>v1 tracks: reversals 0.46 / 0.46, ID-switch candidates 0.23 / 0.09.</li>
+<li>v2 tracks: reversals 0.33 / 0.21, ID switches 0.00 / 0.00, area jumps 0.28 / 0.24.</li>
+</ul>
+<p><strong>LIMITATION.</strong></p>
+<ul>
+<li>Area jumps (≈ 28 %) remain. They come from watershed segmentation, not from merges and splits, so areas and growth rates are not reliable.</li>
+<li>There is no independent truth (radar, lightning or manual labels) to decide which linking rule is right, and the PRD&#39;s ≥ 90 % tracking criterion is not assessed.</li>
+<li>Phase rules v0 are <em>proposed</em>, not validated.</li>
+<li><strong>Object-level claims are diagnostic only, and only to 30 min</strong> (Section 17.9).</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/E8_20260514_fig8_tracking_audit.png" alt="E8 tracking audit"/></figure></p>
+<p><em>Figure 4.</em> Tracking audit, E8: v1 tobac vs v2 overlap tracks. Source: <code>data/figures/E8_20260514_fig8_tracking_audit.png</code>.</p>
+<h1>14. Forecasting methods</h1>
+<p>All forecasts are issued at each 30-min frame from 01:00 to 23:00 UTC (45 issue times per day), for leads of 30, 60 … 360 min. <strong>A forecast issued at frame k reads only frames ≤ k</strong> (tested by destroying future frames).</p>
+<h2>14.1 Persistence</h2>
+<p>The observed BT field at the issue time is repeated unchanged for every lead: BT(t + L) = BT(t). It has no parameters. It is the minimum reference: any useful method must beat it.</p>
+<h2>14.2 pySTEPS advection</h2>
+<ul>
+<li><strong>Motion:</strong> pySTEPS 1.21.5 <strong>Lucas–Kanade</strong> dense optical flow, estimated from the last three frames (t − 60, t − 30, t min). The tracer is cloud-top &quot;coldness&quot;, max(0, 273 K − BT), so warm surfaces are ignored.</li>
+<li><strong>Extrapolation:</strong> <strong>semi-Lagrangian advection</strong> of BT(t) along that motion for up to 12 steps.</li>
+<li><strong>Inflow:</strong> pixels whose trajectories come from outside the grid have no forecast (NaN). They are excluded from scoring, and the excluded fraction is reported.</li>
+<li><strong>Fitting:</strong> none. Settings were fixed in <code>config/baseline.yaml</code> before evaluation.</li>
+<li><strong>Deterministic event:</strong> forecast BT &lt; 235 K.</li>
+<li><strong>No-fit reference (NP31):</strong> the fraction of pySTEPS event pixels in a 31 × 31-pixel (62 km) window. It gives a probability without any fitting and is used to judge whether the ML adds more than smoothing.</li>
+</ul>
+<h2>14.3 ML prototype</h2>
+<p>A per-pixel probability that BT(t + L) &lt; 235 K, from a histogram gradient-boosting classifier with isotonic calibration. It uses the pySTEPS forecast and recent-IR features (Section 15). The deterministic ML event is p ≥ 0.5, the threshold pre-declared from VALIDATION_PLAN §2.</p>
+<p><strong>Decay-aware extension: not built (Phase 5).</strong></p>
+<ul>
+<li>The simplest extension would extrapolate each cell&#39;s recent Lagrangian tendency (min-BT or log-area change), with AR(1) damping.</li>
+<li>A rule set before computing was: build only if a tendency persists on the development event (E8), with lag-1 coefficient φ &gt; 0 and a 95 % cell-bootstrap interval excluding 0.</li>
+<li>No tendency passed. Min-BT φ = −0.03 [−0.22, 0.15]; log-area φ = 0.16 [−0.01, 0.31]; cold-core φ = −0.25 [−0.53, 0.03]. <strong>Decision: STOP.</strong></li>
+</ul>
+<h1>15. ML model</h1>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Value (frozen)</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Model version</td>
+<td><strong>ml-v0</strong></td>
+<td><code>data/models/ml-v0/model_card.json</code></td>
+</tr>
+<tr>
+<td>Model type</td>
+<td><code>sklearn.ensemble.HistGradientBoostingClassifier</code> (histogram GBDT, the LightGBM family; LightGBM not installed) + <code>IsotonicRegression</code></td>
+<td><code>config/ml_dataset.yaml</code></td>
+</tr>
+<tr>
+<td>Hyper-parameters (fixed before training)</td>
+<td>learning rate 0.05; max 31 leaf nodes; min 500 samples per leaf; L2 1.0; no internal early stopping (it would split pixels at random); random_state 0</td>
+<td>model card</td>
+</tr>
+<tr>
+<td>Number of trees</td>
+<td><strong>216</strong>, chosen by minimum weighted validation log-loss over 400 staged iterations, then refit</td>
+<td>model card; fig. 21</td>
+</tr>
+<tr>
+<td>Target</td>
+<td>Observed BT(t + L) &lt; 235 K at each 2 km pixel</td>
+<td><code>config/ml_dataset.yaml</code></td>
+</tr>
+<tr>
+<td>Lead times</td>
+<td>30, 60, 90 … 360 min (12 leads)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Features (17)</td>
+<td>lead; pySTEPS BT at t + L; pySTEPS event fraction in 11 × 11 and 31 × 31 px; pySTEPS min in 11 × 11 px; pySTEPS valid fraction in 31 × 31 px (edge proxy); BT(t); BT(t) event fraction 31 × 31; BT(t) min 11 × 11; 30-min tendency (raw and advected); neighbourhood mean of advected tendency; motion speed; domain cold fraction and its 60-min change; valid hour (sin, cos). <strong>No latitude, longitude or terrain.</strong></td>
+<td><code>ml/features/grid_features.py</code></td>
+</tr>
+<tr>
+<td>Training period</td>
+<td>18–31 May 2026: 14 days, of which 7 convective; 1,467,318 sampled rows</td>
+<td>model card</td>
+</tr>
+<tr>
+<td>Calibration / validation period</td>
+<td>6–12 May 2026: 7 days, of which 5 convective; 856,830 rows; used only for tree count and isotonic calibration</td>
+<td>model card</td>
+</tr>
+<tr>
+<td>Test period (held out)</td>
+<td>E8 14 May, E10 4 May, E11 16 May 2026; never read in training; scored once with the frozen model</td>
+<td>ML_PROTOTYPE §1</td>
+</tr>
+<tr>
+<td>Excluded</td>
+<td>All event days (1, 4, 14, 16 May) ± 1 day</td>
+<td>dataset manifest</td>
+</tr>
+<tr>
+<td>Sampling</td>
+<td>Per (day, issue, lead): 150 event, 150 near-cold non-event, 60 far non-event pixels, with inverse-probability weights (weighted totals reproduce the full grid, tested)</td>
+<td><code>config/ml_dataset.yaml</code></td>
+</tr>
+<tr>
+<td>Sufficiency gate</td>
+<td>≥ 7 convective training days and ≥ 3 convective validation days; result 7 and 5, so PROCEED</td>
+<td>model card</td>
+</tr>
+<tr>
+<td>Calibration</td>
+<td>Isotonic per lead bin (30 / 60 / 90–120 / 150–360 min), validation days only. Weighted log-loss 0.0552 raw → 0.0529 calibrated</td>
+<td>model card</td>
+</tr>
+<tr>
+<td>Deterministic threshold</td>
+<td>p ≥ 0.5 (pre-declared, not tuned)</td>
+<td>VALIDATION_PLAN §2</td>
+</tr>
+<tr>
+<td>Freeze</td>
+<td><code>model.joblib</code> SHA-256 <code>597e3c06c5db7ec2…</code>; <code>calibrators.joblib</code> <code>0da01eb8bd2f3598…</code>; <code>model_card.json</code> <code>2a763b0aaeae9858…</code></td>
+<td><code>docs/FREEZE_ml-v0.json</code>; PROVENANCE §Phase 7</td>
+</tr>
+</tbody></table>
+<p><em>Table 5.</em> ML model card summary.</p>
+<p><strong>INTERPRETATION: what the model learned.</strong></p>
+<ul>
+<li>Permutation importance on a validation-day subsample ranks the features by the increase in weighted log-loss:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Log-loss increase</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pySTEPS 31-px event fraction</td>
+<td>0.019</td>
+</tr>
+<tr>
+<td>Lead</td>
+<td>0.008</td>
+</tr>
+<tr>
+<td>BT(t) neighbourhood fraction</td>
+<td>0.005</td>
+</tr>
+<tr>
+<td>Motion speed</td>
+<td>0.003</td>
+</tr>
+<tr>
+<td>pySTEPS minimum</td>
+<td>0.003</td>
+</tr>
+<tr>
+<td>Advected-tendency mean</td>
+<td>0.003</td>
+</tr>
+</tbody></table>
+<ul>
+<li>Diurnal terms add ≈ 0.001–0.002. Domain-scale and raw-BT features add nothing (≤ 0).</li>
+<li><strong>The model is mainly a calibrated, lead-aware neighbourhood refinement of pySTEPS, with modest tendency and time-of-day information.</strong></li>
+<li><strong>Storm initiation (new development) was not demonstrated</strong>, and no initiation-specific score exists.</li>
+<li>After calibration, probabilities from 150 min onward never reach 0.5, because high raw probabilities verified only about 27 % of the time on validation days.</li>
+</ul>
+<h1>16. Validation methodology</h1>
+<p><strong>Event selection.</strong> Rules fixed before any scoring (<code>config/events.yaml</code>):</p>
+<ul>
+<li>The date is printed in the archived IMD hail report.</li>
+<li>All 24 hourly CPC files exist.</li>
+<li>At least 2 reported places geocode inside the domain.</li>
+<li>The date is not within ±1 day of another selected event.</li>
+</ul>
+<p><strong>Suitability rule</strong> (also fixed beforehand): all 48 frames present, and BT &lt; 235 K present in ≥ 50 % of frames.</p>
+<ul>
+<li><strong>Results:</strong> E8, E10 and E11 passed. E8a (1 May) failed with 21 % deep-convection frames and was excluded.</li>
+<li><strong>Unavailable:</strong> E9 (5 and 9 April 2026), because April is missing from the archive.</li>
+</ul>
+<p><strong>Time-blocked separation.</strong></p>
+<ul>
+<li><strong>Grid baselines:</strong> no fitted parameters, so the only leakage risk is future data; every forecast uses frames ≤ issue time (tested).</li>
+<li><strong>ML:</strong> calendar-day blocks, no random pixel splits:<ul>
+<li>train 18–31 May;</li>
+<li>validation 6–12 May;</li>
+<li>test E8/E10/E11;</li>
+<li>±1-day buffers around every event day.</li>
+</ul>
+</li>
+<li><strong>LIMITATION:</strong> the archive starts 1 May, so training days come <strong>after</strong> the test days (backward-in-time test).</li>
+</ul>
+<p><strong>Leakage checks</strong> (automated tests):</p>
+<ul>
+<li>features unchanged when future frames are destroyed;</li>
+<li>no test or buffer day in any training or validation file;</li>
+<li>lifecycle tendencies unchanged when later rows are deleted;</li>
+<li>isotonic calibration reproduces its validation log-loss (it was fitted on validation rows);</li>
+<li>a split touching a test day is rejected.</li>
+</ul>
+<p><strong>Identical-pixel scoring.</strong> Mask <strong>V</strong> = inside the domain, and valid in the observation, the persistence forecast and the pySTEPS forecast. Every method is scored on the same pixels (tested). A second mask <strong>D</strong> includes the inflow edge, where pySTEPS has no forecast; D is used for edge-only diagnostics.</p>
+<p><strong>Metrics</strong> (VALIDATION_PLAN §2), from the contingency table of hits H, misses M and false alarms F:</p>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Definition</th>
+<th>What it measures</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>POD</td>
+<td>H/(H+M)</td>
+<td>Share of observed events that were forecast</td>
+</tr>
+<tr>
+<td>FAR</td>
+<td>F/(H+F)</td>
+<td>Share of forecast events that did not happen</td>
+</tr>
+<tr>
+<td>CSI</td>
+<td>H/(H+M+F)</td>
+<td>Overall yes/no agreement</td>
+</tr>
+<tr>
+<td>Frequency bias</td>
+<td>(H+F)/(H+M)</td>
+<td>Over- (&gt; 1) or under-forecasting (&lt; 1) of event area</td>
+</tr>
+<tr>
+<td>FSS</td>
+<td>Roberts &amp; Lean (2008), at 10 / 20 / 40 km</td>
+<td>Spatial agreement at a given scale; &quot;useful&quot; if ≥ 0.5 + f₀/2</td>
+</tr>
+<tr>
+<td>BSS</td>
+<td>1 − BS/BS_ref, reference = training-split climatology per lead</td>
+<td>Probability skill; deterministic methods enter as 0/1 probabilities</td>
+</tr>
+<tr>
+<td>Reliability / ECE</td>
+<td>10 bins; ECE = Σ|Σp − Σo|/n</td>
+<td>Calibration</td>
+</tr>
+</tbody></table>
+<p><strong>Uncertainty.</strong></p>
+<ul>
+<li>Within each event: a circular block bootstrap over issue times, with 6-h blocks (the longest lead), 1000 resamples, seed 20260925, and hits/misses/false alarms (or Brier sums) re-pooled on each resample.</li>
+<li>Across events: a bootstrap by event day. With 3 events it is <strong>indicative only</strong>; the best possible one-sided sign-test p is 0.125.</li>
+</ul>
+<p><strong>Error decomposition (Phase 5).</strong> Pooled frequency bias factorises exactly as bias = <strong>E × C × G</strong>:</p>
+<ul>
+<li><strong>E (edge):</strong> the effect of scoring only the region pySTEPS can forecast;</li>
+<li><strong>C:</strong> the change in advected cold area;</li>
+<li><strong>G:</strong> the observed domain cold-area change, i.e. unchanged intensity.</li>
+</ul>
+<p>An oracle that matches forecast area to the observation bounds what any uniform growth/decay correction could gain. It uses the observation and is not a forecast.</p>
+<p><strong>Reproducibility.</strong> Reruns produced byte-identical CSVs (baselines, v2 tracks, cross-event tables, dataset days, reliability gate). Every output is listed with its SHA-256 in per-phase provenance files, and all 386 evidence files are frozen (Section 22).</p>
+<h1>17. Results</h1>
+<p>All values: held-out event days, mask V, event = BT &lt; 235 K.</p>
+<ul>
+<li>P = persistence</li>
+<li>A = pySTEPS advection</li>
+<li>NP31 = no-fit neighbourhood pySTEPS</li>
+<li>ML = ml-v0 calibrated</li>
+</ul>
+<h2>17.1 Single-event baseline (E8, 14 May 2026)</h2>
+<table>
+<thead>
+<tr>
+<th>Lead (min)</th>
+<th>Excluded fraction</th>
+<th>CSI P / A</th>
+<th>POD P / A</th>
+<th>FAR P / A</th>
+<th>Bias P / A</th>
+<th>FSS 20 km P / A</th>
+<th>FSS 40 km P / A</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30</td>
+<td>0.087</td>
+<td>0.509 / <strong>0.593</strong></td>
+<td>0.688 / 0.802</td>
+<td>0.338 / 0.306</td>
+<td>1.04 / 1.16</td>
+<td>0.792 / <strong>0.853</strong></td>
+<td>0.851 / 0.898</td>
+</tr>
+<tr>
+<td>60</td>
+<td>0.112</td>
+<td>0.352 / <strong>0.428</strong></td>
+<td>0.534 / 0.684</td>
+<td>0.493 / 0.467</td>
+<td>1.05 / 1.28</td>
+<td>0.635 / <strong>0.713</strong></td>
+<td>0.700 / 0.771</td>
+</tr>
+<tr>
+<td>120</td>
+<td>0.162</td>
+<td>0.191 / <strong>0.245</strong></td>
+<td>0.327 / 0.481</td>
+<td>0.684 / 0.666</td>
+<td>1.03 / 1.44</td>
+<td>0.400 / <strong>0.480</strong></td>
+<td>0.448 / 0.534</td>
+</tr>
+<tr>
+<td>180</td>
+<td>0.211</td>
+<td>0.106 / <strong>0.156</strong></td>
+<td>0.192 / 0.351</td>
+<td>0.809 / 0.780</td>
+<td>1.01 / 1.60</td>
+<td>0.237 / 0.333</td>
+<td>0.266 / 0.371</td>
+</tr>
+<tr>
+<td>240</td>
+<td>0.258</td>
+<td>0.077 / 0.109</td>
+<td>0.139 / 0.267</td>
+<td>0.852 / 0.844</td>
+<td>0.94 / 1.71</td>
+<td>0.169 / 0.244</td>
+<td>0.187 / 0.271</td>
+</tr>
+<tr>
+<td>360</td>
+<td>0.348</td>
+<td>0.038 / 0.043</td>
+<td>0.066 / 0.148</td>
+<td>0.919 / 0.943</td>
+<td>0.82 / 2.61</td>
+<td>0.084 / 0.099</td>
+<td>0.097 / 0.110</td>
+</tr>
+</tbody></table>
+<p><em>Table 6.</em> E8 grid baselines, pooled over 45 issue times. Source: <code>data/processed/E8_20260514/baseline/grid_metrics_by_lead.csv</code>; BASELINE_EVAL §3. The useful FSS threshold is ≈ 0.51.</p>
+<h2>17.2 Baselines on three events (Phase 4)</h2>
+<table>
+<thead>
+<tr>
+<th>Lead (min)</th>
+<th>CSI P / A: E8</th>
+<th>CSI P / A: E10</th>
+<th>CSI P / A: E11</th>
+<th>Bias P / A: E8</th>
+<th>Bias P / A: E10</th>
+<th>Bias P / A: E11</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30</td>
+<td>0.509 / <strong>0.593</strong></td>
+<td>0.514 / <strong>0.582</strong></td>
+<td>0.492 / <strong>0.589</strong></td>
+<td>1.04 / 1.16</td>
+<td>1.08 / 1.11</td>
+<td>1.02 / 1.13</td>
+</tr>
+<tr>
+<td>60</td>
+<td>0.352 / <strong>0.428</strong></td>
+<td>0.336 / <strong>0.428</strong></td>
+<td>0.341 / <strong>0.441</strong></td>
+<td>1.05 / 1.28</td>
+<td>1.13 / 1.18</td>
+<td>1.01 / 1.23</td>
+</tr>
+<tr>
+<td>120</td>
+<td>0.191 / <strong>0.245</strong></td>
+<td>0.169 / <strong>0.263</strong></td>
+<td>0.160 / <strong>0.283</strong></td>
+<td>1.03 / 1.44</td>
+<td>1.11 / 1.21</td>
+<td>0.85 / 1.40</td>
+</tr>
+<tr>
+<td>180</td>
+<td>0.106 / <strong>0.156</strong></td>
+<td>0.089 / <strong>0.178</strong></td>
+<td>0.025 / <strong>0.213</strong></td>
+<td>1.01 / 1.60</td>
+<td>1.04 / 1.15</td>
+<td>0.56 / 1.56</td>
+</tr>
+<tr>
+<td>240</td>
+<td>0.077 / <strong>0.109</strong></td>
+<td>0.043 / <strong>0.130</strong></td>
+<td>0.001 / <strong>0.110</strong></td>
+<td>0.94 / 1.71</td>
+<td>0.98 / 1.07</td>
+<td>0.41 / 1.68</td>
+</tr>
+<tr>
+<td>360</td>
+<td>0.038 / 0.043</td>
+<td>0.019 / 0.054</td>
+<td>0.000 / 0.002</td>
+<td>0.82 / 2.61</td>
+<td>0.91 / 0.97</td>
+<td>0.80 / 1.53</td>
+</tr>
+</tbody></table>
+<p><em>Table 7.</em> Per-event CSI and frequency bias. Source: <code>data/processed/multi_event/event_metrics_by_lead.csv</code>; MULTI_EVENT §4.</p>
+<table>
+<thead>
+<tr>
+<th>Lead (min)</th>
+<th>Pooled CSI P</th>
+<th>Pooled CSI A</th>
+<th>Events with A better (CSI and FSS 40 km)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30</td>
+<td>0.511</td>
+<td>0.586</td>
+<td>3 / 3</td>
+</tr>
+<tr>
+<td>60</td>
+<td>0.342</td>
+<td>0.429</td>
+<td>3 / 3</td>
+</tr>
+<tr>
+<td>120</td>
+<td>0.176</td>
+<td>0.258</td>
+<td>3 / 3</td>
+</tr>
+<tr>
+<td>180</td>
+<td>0.092</td>
+<td>0.172</td>
+<td>3 / 3</td>
+</tr>
+<tr>
+<td>360</td>
+<td>0.022</td>
+<td>0.049</td>
+<td>3 / 3</td>
+</tr>
+</tbody></table>
+<p><em>Table 8.</em> Cross-event pooled CSI. Source: <code>data/processed/multi_event/cross_event_by_lead.csv</code>.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>E8</th>
+<th>E10</th>
+<th>E11</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Useful FSS 40 km (P / A)</td>
+<td>to 90 / 120 min</td>
+<td>to 90 / 120 min</td>
+<td>to 90 / 120 min</td>
+</tr>
+<tr>
+<td>Useful FSS 20 km (P / A)</td>
+<td>to 60 / 90 min</td>
+<td>to 60 / 90 min</td>
+<td>to 60 / 120 min</td>
+</tr>
+<tr>
+<td>CSI e-folding time, 30–180 min fit (P / A)</td>
+<td>96 / 113 min</td>
+<td>87 / 128 min</td>
+<td>54 / 149 min</td>
+</tr>
+<tr>
+<td>Within-event 95 % interval of CSI(A) − CSI(P) excludes 0 at</td>
+<td>30–240 min</td>
+<td>30–360 min</td>
+<td>30 min only</td>
+</tr>
+</tbody></table>
+<p><em>Table 9.</em> Skill decay and within-event uncertainty. Source: <code>decay_by_event.csv</code>, <code>event_block_bootstrap.csv</code>; MULTI_EVENT §4–5.</p>
+<ul>
+<li><strong>OBSERVED RESULT.</strong> pySTEPS beats persistence on CSI and FSS 40 km at every lead on all 3 days. Useful skill ends at about 2 h.</li>
+<li><strong>INTERPRETATION.</strong> The Phase-2 finding on E8 was repeated on two more days.</li>
+<li><strong>LIMITATION.</strong> Three events cannot give cross-event significance (best sign test p = 0.125). E11 is weak (base rate 0.4 %), so its intervals are wide.</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/multi_event_fig11_skill_by_event.png" alt="Skill by event"/></figure></p>
+<p><em>Figure 5.</em> CSI, FSS 40 km and frequency bias vs lead for each event. Source: <code>data/figures/multi_event_fig11_skill_by_event.png</code>.</p>
+<h2>17.3 Why skill fades: bias decomposition (Phase 5)</h2>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Lead (min)</th>
+<th>Bias (scored region)</th>
+<th>Edge E</th>
+<th>Advected area C</th>
+<th>Intensity G</th>
+<th>Whole-domain bias</th>
+<th>Observed cold pixels in edge</th>
+<th>CSI P / A / oracle</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E8</td>
+<td>120</td>
+<td>1.44</td>
+<td>1.33</td>
+<td>1.08</td>
+<td>1.00</td>
+<td>1.09</td>
+<td>30 %</td>
+<td>0.191 / 0.245 / 0.269</td>
+</tr>
+<tr>
+<td>E8</td>
+<td>360</td>
+<td>2.61</td>
+<td>3.76</td>
+<td>0.73</td>
+<td>0.96</td>
+<td>0.70</td>
+<td>76 %</td>
+<td>0.038 / 0.043 / 0.048</td>
+</tr>
+<tr>
+<td>E10</td>
+<td>120</td>
+<td>1.21</td>
+<td>1.11</td>
+<td>1.03</td>
+<td>1.06</td>
+<td>1.09</td>
+<td>17 %</td>
+<td>0.169 / 0.263 / 0.283</td>
+</tr>
+<tr>
+<td>E11</td>
+<td>120</td>
+<td>1.40</td>
+<td>1.19</td>
+<td>1.22</td>
+<td>0.97</td>
+<td>1.18</td>
+<td>19 %</td>
+<td>0.160 / 0.283 / 0.337</td>
+</tr>
+<tr>
+<td>E11</td>
+<td>360</td>
+<td>1.53</td>
+<td>4.80</td>
+<td>1.25</td>
+<td>0.26</td>
+<td>0.32</td>
+<td>80 %</td>
+<td>0.000 / 0.002 / 0.010</td>
+</tr>
+</tbody></table>
+<p><em>Table 10.</em> Exact bias factorisation (bias = E × C × G). Source: <code>data/processed/multi_event/phase5/decomposition_by_lead.csv</code>; DECAY_AWARE §2.</p>
+<ul>
+<li><strong>OBSERVED RESULT.</strong><ul>
+<li>The growing pySTEPS bias is mostly the edge term. On E8 at 6 h, the bias is 2.61 on the scored region but 0.70 over the whole domain.</li>
+<li>Pooled over each day, the intensity term is small on E8/E10.</li>
+<li>By time of day it shows growth for morning issues and decay for afternoon/evening issues.</li>
+</ul>
+</li>
+<li><strong>INTERPRETATION.</strong><ul>
+<li>New and entering storms upstream cannot be forecast by extrapolation.</li>
+<li>Even a perfect uniform area correction adds at most +0.035 CSI on E8 and +0.026 on E10.</li>
+<li>Placement error and new development dominate the remaining error.</li>
+</ul>
+</li>
+<li><strong>LIMITATION.</strong> The oracle covers uniform corrections only.</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/phase5_fig14_bias_decomposition.png" alt="Bias decomposition"/></figure></p>
+<p><em>Figure 6.</em> Bias decomposition and CSI (persistence, pySTEPS, edge-scored, oracle) by lead. Source: <code>data/figures/phase5_fig14_bias_decomposition.png</code>.</p>
+<h2>17.4 ML vs baselines (Phase 6, held-out E8 + E10 + E11 pooled)</h2>
+<table>
+<thead>
+<tr>
+<th>Lead (min)</th>
+<th>CSI P / A / NP31 / ML (p ≥ 0.5)</th>
+<th>FSS 40 km A / ML (event mean)</th>
+<th>Bias A / ML</th>
+<th>BSS P / A / NP31 / <strong>ML</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30</td>
+<td>0.511 / 0.586 / 0.596 / 0.583</td>
+<td>0.901 / 0.886</td>
+<td>1.13 / 0.76</td>
+<td>0.32 / 0.44 / 0.63 / <strong>0.67</strong></td>
+</tr>
+<tr>
+<td>60</td>
+<td>0.342 / 0.429 / 0.444 / 0.452</td>
+<td>0.773 / 0.778</td>
+<td>1.22 / 0.66</td>
+<td>−0.04 / 0.10 / 0.41 / <strong>0.51</strong></td>
+</tr>
+<tr>
+<td>120</td>
+<td>0.176 / 0.258 / 0.264 / 0.243</td>
+<td>0.543 / 0.525</td>
+<td>1.30 / 0.54</td>
+<td>−0.47 / −0.38 / 0.02 / <strong>0.27</strong></td>
+</tr>
+<tr>
+<td>180</td>
+<td>0.092 / 0.172 / 0.172 / 0.000</td>
+<td>0.402 / 0.000</td>
+<td>1.32 / 0.00</td>
+<td>−0.69 / −0.67 / −0.23 / <strong>0.13</strong></td>
+</tr>
+<tr>
+<td>240</td>
+<td>0.052 / 0.122 / 0.116 / 0.000</td>
+<td>0.276 / 0.000</td>
+<td>1.28 / 0.00</td>
+<td>−0.78 / −0.82 / −0.37 / <strong>0.06</strong></td>
+</tr>
+<tr>
+<td>360</td>
+<td>0.022 / 0.049 / 0.045 / 0.000</td>
+<td>0.086 / 0.000</td>
+<td>1.29 / 0.00</td>
+<td>−0.84 / −1.11 / −0.59 / −0.03</td>
+</tr>
+</tbody></table>
+<p><em>Table 11.</em> Final comparison. Source: <code>data/processed/ml_eval/ml-v0/metrics_pooled_lead.csv</code>, <code>metrics_by_event_lead.csv</code>; ML_PROTOTYPE §3; FINAL_RESULTS Slide 1.</p>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>30 min</th>
+<th>60 min</th>
+<th>120 min</th>
+<th>180 min</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E8</td>
+<td>+0.04 [0.03, 0.11]</td>
+<td>+0.12 [0.04, 0.36]</td>
+<td>+0.27 [0.04, 0.92]</td>
+<td>+0.49 [0.10, 1.63]</td>
+</tr>
+<tr>
+<td>E10</td>
+<td>+0.03 [0.01, 0.11]</td>
+<td>+0.11 [0.03, 0.50]</td>
+<td>+0.26 [0.08, 0.95]</td>
+<td>+0.31 [0.05, 1.37]</td>
+</tr>
+<tr>
+<td>E11</td>
+<td>0.00 [−0.03, 0.09]</td>
+<td>+0.01 [−0.07, 0.19]</td>
+<td>+0.16 [−0.12, 0.86]</td>
+<td>+0.26 [−0.17, 1.46]</td>
+</tr>
+</tbody></table>
+<p><em>Table 12.</em> BSS(ML) − BSS(NP31) per event, with 95 % within-event block-bootstrap intervals. Source: <code>bootstrap_ml_vs_pysteps.csv</code>; ML_PROTOTYPE §3.</p>
+<ul>
+<li><strong>OBSERVED RESULT.</strong><ul>
+<li>ML has the highest BSS at every lead to 4 h (0.67, 0.51, 0.27, 0.13, 0.06 at 30 min to 4 h), and it is −0.03 at 6 h.</li>
+<li>Its gain over the no-fit neighbourhood reference is significant within E8 and E10, but not within E11.</li>
+<li>As a yes/no forecast (p ≥ 0.5), ML CSI beats pySTEPS only at 60 min (0.452 vs 0.429). It is lower at 30 and 120 min, and 0 from 150 min.</li>
+<li>The CSI(ML) − CSI(pySTEPS) intervals include 0 at 30–120 min on all events. From 150 min the upper bound is ≤ 0.</li>
+</ul>
+</li>
+<li><strong>INTERPRETATION.</strong><ul>
+<li>The ML advantage is in <strong>probability skill</strong>, not in yes/no maps beyond 1 h.</li>
+<li>The calibrated model will not issue high probabilities at long leads, which is honest calibration rather than a display failure.</li>
+</ul>
+</li>
+<li><strong>LIMITATION.</strong><ul>
+<li>This is not &quot;ML beats pySTEPS&quot; in general.</li>
+<li>There is no 6-h skill, and no skill across events can be established from 3 days.</li>
+<li>The BSS reference (training climatology) differs from the test-day base rates.</li>
+</ul>
+</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/phase6_fig17_skill_vs_lead.png" alt="Skill vs lead"/></figure></p>
+<p><em>Figure 7.</em> CSI, FSS 40 km, BSS and bias vs lead for all methods, held-out events pooled. Source: <code>data/figures/phase6_fig17_skill_vs_lead.png</code>.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/phase6_fig18_ml_minus_pysteps_ci.png" alt="ML minus references"/></figure></p>
+<p><em>Figure 8.</em> Per-event CSI(ML) − CSI(pySTEPS) and BSS(ML) − BSS(NP31), with block-bootstrap intervals. Source: <code>data/figures/phase6_fig18_ml_minus_pysteps_ci.png</code>.</p>
+<h2>17.5 Calibration</h2>
+<table>
+<thead>
+<tr>
+<th>Lead bin (min)</th>
+<th>ECE (ML)</th>
+<th>ECE (NP31)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>30</td>
+<td>0.0022</td>
+<td>0.0023</td>
+</tr>
+<tr>
+<td>60</td>
+<td>0.0034</td>
+<td>0.0082</td>
+</tr>
+<tr>
+<td>90–120</td>
+<td>0.0042</td>
+<td>0.0163</td>
+</tr>
+<tr>
+<td>150–360</td>
+<td>0.0026</td>
+<td>0.0301</td>
+</tr>
+</tbody></table>
+<p><em>Table 13.</em> Expected calibration error on held-out days (10 bins). Source: <code>data/processed/ml_eval/ml-v0/reliability.csv</code>; FINAL_CLAIMS A7.</p>
+<ul>
+<li><strong>OBSERVED RESULT.</strong> ML probabilities are close to the reliability diagonal in every lead bin. NP31 is over-confident from 60 min on.</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/data/figures/phase6_fig19_reliability.png" alt="Reliability"/></figure></p>
+<p><em>Figure 9.</em> Reliability diagrams with counts, per lead bin. Source: <code>data/figures/phase6_fig19_reliability.png</code>.</p>
+<h2>17.6 Inflow edge</h2>
+<ul>
+<li><strong>OBSERVED RESULT.</strong> On pixels that pySTEPS cannot forecast (outside V):<ul>
+<li>ML BSS is 0.43 at 30 min and 0.22 at 120 min, vs 0.37 and 0.11 for NP31;</li>
+<li>at 30 min, ML POD is 0.38 vs 0.21 for pySTEPS.</li>
+</ul>
+</li>
+<li><strong>INTERPRETATION.</strong> This is the one place the model adds placement information for entering storms. Source: <code>metrics_edge_only.csv</code>.</li>
+</ul>
+<h2>17.7 Event-wise findings</h2>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Main finding</th>
+<th>Caveat</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>E8 (14 May)</td>
+<td>Strong day (base rate 2.7 %); pySTEPS &gt; P at all leads; ML &gt; NP31 (intervals above 0, 30 min to 3 h)</td>
+<td>6 QC-fail frames (10:00–12:30 UTC)</td>
+</tr>
+<tr>
+<td>E10 (4 May)</td>
+<td>Strongest day (base rate 4.2 %); smallest pySTEPS bias growth (1.11 → 1.21, then ≈ 1.0)</td>
+<td>9 QC-fail frames (17:00–21:30 UTC)</td>
+</tr>
+<tr>
+<td>E11 (16 May)</td>
+<td>Weak day (base rate 0.4 %); pySTEPS &gt; P; ML not significantly better than NP31</td>
+<td>Small sample; wide intervals</td>
+</tr>
+</tbody></table>
+<p><em>Table 14.</em> Event-wise summary. Sources: MULTI_EVENT §4–7; ML_PROTOTYPE §3.</p>
+<h2>17.8 Tracking audit results</h2>
+<p>See Table 4 (Section 13). <strong>OBSERVED RESULT:</strong> v2 removes ID switches (0.206 → 0.004 on E8; 0.00 on E10 and E11). <strong>LIMITATION:</strong> area jumps (≈ 0.28) and 21–35 % direction reversals remain.</p>
+<h2>17.9 Object diagnostics (diagnostic only)</h2>
+<ul>
+<li><strong>OBSERVED RESULT.</strong> At 30 min, pySTEPS-field advection places cold cells closer than persistence on all 3 events: 0.59 / 0.62 / 0.57 of paired cases (43 / 66 / 18 cells).</li>
+<li><strong>LIMITATION.</strong><ul>
+<li>At 60 min the advantage fails on E11 (0.42, 15 cells), so object claims stop at 30 min.</li>
+<li>Cell positions have no independent truth.</li>
+</ul>
+</li>
+<li>Source: <code>object_diagnostics_by_event.csv</code>.</li>
+</ul>
+<h2>17.10 Reproducibility and test results</h2>
+<p>See Section 22. <strong>OBSERVED RESULT:</strong> 76 Python tests pass (1 skipped), 6/6 web unit tests, 2/2 browser tests; the build passes; the freeze guard confirms that all 386 frozen files are unchanged.</p>
+<div class="pb"></div>
+
+<h1>18. Real event validation</h1>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Date</th>
+<th>Reported hail places (in domain)</th>
+<th>Frames</th>
+<th>Issue times</th>
+<th>QC-fail frames</th>
+<th>Deep-convection frames</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>E8</strong></td>
+<td>14 May 2026</td>
+<td>16 (15)</td>
+<td>48</td>
+<td>45</td>
+<td>6</td>
+<td>92 %</td>
+<td>Phase-1 reference; held-out test</td>
+</tr>
+<tr>
+<td><strong>E10</strong></td>
+<td>4 May 2026</td>
+<td>10 (10)</td>
+<td>48</td>
+<td>45</td>
+<td>9</td>
+<td>96 %</td>
+<td>Held-out test</td>
+</tr>
+<tr>
+<td><strong>E11</strong></td>
+<td>16 May 2026</td>
+<td>5 (3)</td>
+<td>48</td>
+<td>45</td>
+<td>0</td>
+<td>65 %</td>
+<td>Held-out test (weak event)</td>
+</tr>
+<tr>
+<td>E8a</td>
+<td>1 May 2026</td>
+<td>20 (17)</td>
+<td>48</td>
+<td>—</td>
+<td>0</td>
+<td>21 %</td>
+<td><strong>Excluded:</strong> fails the pre-declared suitability rule (≥ 50 %)</td>
+</tr>
+<tr>
+<td>E9</td>
+<td>21 Mar, 5 and 9 Apr 2026</td>
+<td>—</td>
+<td>0</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><strong>Unavailable:</strong> before 30 Mar / April missing from the archive</td>
+</tr>
+<tr>
+<td>E1–E7</td>
+<td>2018–2025</td>
+<td>—</td>
+<td>0</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td><strong>Not available:</strong> before the approved archive (or outside the domain)</td>
+</tr>
+</tbody></table>
+<p><em>Table 15.</em> Event table. Sources: MULTI_EVENT §1, <code>event_qc.csv</code>, REPLAY_SPEC §1.</p>
+<p><strong>Selection rationale.</strong> The dates come from the archived IMD RMC New Delhi hail report. Candidates were ranked by number of reported places and filtered by the rule in Section 16. No other candidate qualified: 13, 15, 2, 3 and 5 May are within ±1 day of a selected event; 6 May has 1 in-domain place; 7 May has 1 place; and the PDF ends on 16 May.</p>
+<p><strong>Held-out evaluation.</strong> All three days are excluded, with ±1-day buffers, from ML training and calibration. The grid baselines have no fitted parameters.</p>
+<p><strong>LIMITATION: scope.</strong> Three pre-monsoon days in May 2026, one region (NW India) and one hail report. Nothing is shown for the monsoon, cloudbursts, other regions, other years or other satellites. Hail reports are used only to choose days; they were never verification truth.</p>
+<div class="pb"></div>
+
+<h1>19. Product / dashboard</h1>
+<p><strong>The web prototype</strong> (<code>apps/web/</code>) is a static React 18 + TypeScript + Vite + MapLibre application.</p>
+<ul>
+<li><strong>Data:</strong> it reads replay bundles (<code>apps/web/public/bundles/{event}/</code>) built by <code>pipelines/replay/build_bundle.py</code> from frozen files only; each input hash is checked against the freeze manifest.</li>
+<li><strong>Bundles:</strong> one per held-out event (E8, E10, E11), each with 20 frozen inputs and 735 output files; 82 MB in total.</li>
+<li><strong>Tiles:</strong> fields are stored as 8-bit data tiles on a Web-Mercator display grid and colourised in the browser. The display resampling (nearest neighbour) is for drawing only.</li>
+<li><strong>App shell</strong> (UI_UX_SPEC §3):<ul>
+<li>sidebar with START / OPERATE / INVESTIGATE / EVIDENCE groups and count badges;</li>
+<li>top bar with the REPLAY badge, valid time in UTC and IST, data tier, model version and frame QC;</li>
+<li>a 48-frame timeline with QC-fail marks, play at 1×/2×/5×, and a lead selector;</li>
+<li>keyboard shortcuts (←/→, Space, 1–9, B);</li>
+<li>the footer disclaimer <em>&quot;Research prototype — not an official IMD warning&quot;</em>.</li>
+</ul>
+</li>
+</ul>
+<pre class="mermaid">flowchart LR
+  NAV["App shell<br/>sidebar navigation · top bar<br/>(REPLAY · valid UTC/IST · data tier<br/>model ml-v0 · frame QC)<br/>timeline · disclaimer footer"]
+  NAV --> ST["START"] & OP["OPERATE"] & IN["INVESTIGATE"] & EV["EVIDENCE"]
+  ST --> s1["1 · Event selection<br/><i>index.json</i>"]
+  OP --> s2["2 · Situation<br/><i>obs tiles · cells · cellfc · alerts</i>"]
+  OP --> s3["3 · Storm Cells + details / ML probability<br/><i>cells · tracks · cellfc</i>"]
+  OP --> s4["4 · 0–6 h Forecast<br/><i>fc tiles · skill · scores</i>"]
+  OP --> s5["5 · Alert Center + CAP preview<br/><i>alerts · places</i>"]
+  IN --> s6["6 · Historical Replay<br/><i>obs + fc tiles · contours · scores · alerts</i>"]
+  IN --> s7["7 · Confidence<br/><i>skill: reliability · bootstrap</i>"]
+  EV --> s8["8 · Model Performance<br/><i>skill: pooled · per event · Phase 4–5</i>"]
+  EV --> s9["9 · Data Health<br/><i>health · manifest (hashes)</i>"]
+  BUN[("Static replay bundle per event<br/>apps/web/public/bundles/{event}/<br/>built from frozen files only")]
+  BUN -. "read by every screen" .-> NAV</pre><p><em>Figure 10a (Diagram 5).</em> Dashboard information architecture: navigation groups, screens and the bundle files each screen reads.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Screen</th>
+<th>Purpose</th>
+<th>Inputs (bundle)</th>
+<th>Displayed information</th>
+<th>Decision-support value</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Event selection</td>
+<td>Choose a real event</td>
+<td><code>index.json</code></td>
+<td>Cards E1–E11, with BUNDLED / EXCLUDED / NOT AVAILABLE and the reason</td>
+<td>Shows which evidence exists and why others do not</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Situation dashboard</td>
+<td>Current overview</td>
+<td>obs tiles, cells, cellfc, alerts</td>
+<td>IR map, phase-styled cells (colour + line style), pySTEPS motion arrows; KPIs (active cells, Mature cells, places with P ≥ 0.5 in 60 min, frame QC); top-5 cells by ML risk; source status</td>
+<td>Where deep convection is now, and which cells to watch</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Storm Cell Tracker</td>
+<td>Inspect one storm</td>
+<td>cells, tracks, cellfc</td>
+<td>Selected cell outline; track so far (solid); pySTEPS-advected track to +6 h (dashed, labelled); sortable cell table</td>
+<td>Follow a cell&#39;s history and likely path</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0–6 h Forecast</td>
+<td>Forecast at a lead</td>
+<td>fc tiles, skill, scores</td>
+<td>Persistence / pySTEPS / ML probability at T+30 min to T+6 h; probability threshold; optional observed outcome (replay); skill ribbon (validated CSI, BSS, FSS 40 km, bias; de-emphasised beyond validated skill); envelope; this issue&#39;s scores</td>
+<td>The forecast with its trustworthiness shown next to it</td>
+<td>Implemented (T+15 min disabled: 30-min source)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Storm details / ML probability</td>
+<td>Cell-level probability</td>
+<td>cells, cellfc</td>
+<td>Cell card: phase (rules v0, PROPOSED), min BT, ΔBT 30 min, area, cold core, age so far, merges/splits, motion; sparklines; ML probability by lead near the forecast cell position</td>
+<td>Quick risk read for a single storm</td>
+<td>Implemented (display summary, not a verified cell metric)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Historical Replay</td>
+<td>Honest look-back</td>
+<td>obs + fc tiles, contours, scores, alerts</td>
+<td>Three synced panes: KNEW / PREDICTED / HAPPENED; method toggle (B); lead Δ; data-availability row; per-issue scorecard; would-have-issued drafts</td>
+<td>Lets evaluators see what the system would have said, and how it turned out</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Model Performance</td>
+<td>Evidence</td>
+<td>skill</td>
+<td>BSS and CSI vs lead (pooled or per event); final comparison table; Phase-4 consistency; Phase-5 decomposition; claim-guard banner</td>
+<td>Shows where each method is and is not useful</td>
+<td>Implemented (no client-side computation)</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Confidence / Data Health</td>
+<td>Trust and provenance</td>
+<td>skill, health, manifest</td>
+<td>Reliability diagrams + ECE; per-event intervals. Source status; per-frame QC strip with raw-file SHA-256; unscorable fraction by lead; model card; limitations; bundle input hashes</td>
+<td>Shows when to distrust the output</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Alert Center</td>
+<td>Human-in-the-loop advisories</td>
+<td>alerts, places</td>
+<td>System status; draft advisories (ML P ≥ 0.5 within 10 km of a report place at +30/+60 min); Approve / Reject; audit log</td>
+<td>Nothing issued without approval</td>
+<td>Implemented (exercise only; alert skill not verified)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Exercise CAP preview</td>
+<td>Standard message</td>
+<td>approved draft</td>
+<td>CAP 1.2 XML preview and download: <code>status=Exercise</code>, disclaimer, source prediction ID, 10 km circle</td>
+<td>Interoperable format for a future workflow</td>
+<td>Implemented (exercise only)</td>
+</tr>
+</tbody></table>
+<p><em>Table 16.</em> Dashboard screens. Sources: PRODUCT_DEMO; <code>apps/web/src/screens/*</code>.</p>
+<p><strong>Screenshot provenance.</strong> Figures 10–14, 16 and 17 are screenshots of the production build replaying the frozen E8 bundle, taken during the verified local browser run. The files are in <code>apps/web/e2e-shots/</code>, which is git-ignored. Basemap-off versions are regenerated by <code>npm run e2e</code>.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/1_situation_basemap.png" alt="Situation"/></figure></p>
+<p><em>Figure 10.</em> Situation dashboard, E8 14 May 2026, 14:00 UTC: 9 active cells; Amritsar flagged by the ML probability; source status. Screenshot from the verified local browser run.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/2_cell_by_map_click.png" alt="Storm cell"/></figure></p>
+<p><em>Figure 11.</em> Storm Cell Tracker: cell #108 (Developing, min BT 216.1 K), selected by clicking the map, with its observed track, pySTEPS-advected track and ML probability by lead.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/4_forecast_ml_threshold05.png" alt="Forecast ML"/></figure></p>
+<p><em>Figure 12.</em> 0–6 h Forecast, ML probability at T+2h (display threshold 0.5). Skill ribbon: CSI 0.243 · BSS 0.27 · FSS40 0.53 · bias 0.54, with the yes/no caveat.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/6_performance.png" alt="Model performance"/></figure></p>
+<p><em>Figure 13.</em> Model Performance screen: claim-guard banner, BSS and CSI vs lead, final comparison table.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/9_alerts.png" alt="Alert Center"/></figure></p>
+<p><em>Figure 14.</em> Alert Center at 08:00 UTC: exercise draft advisories (Shopian P 0.57 at +60 min, Kulgam P 0.69 at +30 min), one approved, with the CAP 1.2 preview (<code>status=Exercise</code>).</p>
+<h1>20. Historical replay</h1>
+<pre class="mermaid">flowchart LR
+  TL["Timeline<br/>issue time t · lead Δ<br/>▶ 1× / 2× / 5×"] --> K
+  TL --> P
+  TL --> H
+  subgraph REPLAY["Three synced map panes (pan / zoom locked)"]
+    K["WHAT THE SYSTEM KNEW<br/>observed IR at t · cells at t<br/>(frames ≤ t)"]
+    P["WHAT IT PREDICTED<br/>ML probability · pySTEPS · persistence<br/>for t + Δ  (key B switches)"]
+    H["WHAT ACTUALLY HAPPENED<br/>observed IR at t + Δ<br/>BT &lt; 235 K outline · IMD report places"]
+  end
+  K --> SC
+  P --> SC["Scorecard for this issue and lead<br/>frozen per-issue CSI · POD · bias · Brier"]
+  H --> SC
+  P --> AL["Would-have-issued draft advisories<br/>(EXERCISE)"]
+  AV["Data availability row<br/>CPC IR QC · INSAT / Meteosat not connected<br/>radar · lightning unavailable"] --> K</pre><p><em>Figure 15 (Diagram 4).</em> Historical replay workflow.</p>
+<p><strong>The replay principle</strong> (REPLAY_SPEC). At issue time <em>t</em> the screen shows three synced maps with pan and zoom locked:</p>
+<ul>
+<li><strong>What the system knew:</strong> the observed IR frame at <em>t</em> and the cells at <em>t</em>. Only frames up to <em>t</em> are used.</li>
+<li><strong>What it predicted:</strong> the forecast for <em>t</em> + Δ. Key <strong>B</strong> cycles ML probability → pySTEPS → persistence, so comparisons are like-for-like.</li>
+<li><strong>What actually happened:</strong> the observed IR at <em>t</em> + Δ, the observed BT &lt; 235 K outline, and the IMD-report places.</li>
+</ul>
+<p><strong>Timeline.</strong></p>
+<ul>
+<li>The timeline steps through the 48 frames. Forecasts exist for the 45 issue times from 01:00 to 23:00 UTC.</li>
+<li>Δ ∈ {30, 60, 120, 180, 240, 360} min.</li>
+<li>Playback runs at 1× (one 30-min step per 2 s), 2× or 5×.</li>
+</ul>
+<p><strong>Below the maps:</strong></p>
+<ul>
+<li>the per-issue scorecard, which shows the frozen scores of all four methods at that lead;</li>
+<li>the would-have-issued exercise drafts;</li>
+<li>a data-availability row: CPC IR QC status; INSAT not available operationally; Meteosat not connected; radar and lightning unavailable.</li>
+</ul>
+<p><strong>LIMITATION.</strong></p>
+<ul>
+<li>This is a <strong>replay of saved outputs</strong>, not a live feed. Product latency is not modelled.</li>
+<li>Hail reports have dates only, so alert lead time relative to reported impact cannot be computed.</li>
+<li>One minor exception to &quot;history only&quot;: cells seen in a single frame were dropped offline using the next frame. This is stated on screen.</li>
+</ul>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/5_replay.png" alt="Replay"/></figure></p>
+<p><em>Figure 16.</em> Historical Replay screen, E8: the three synced panes with the pySTEPS forecast at T+2h.</p>
+<h1>21. Data health and uncertainty</h1>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>What is shown</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>QC failures</td>
+<td>Per-frame strip (48 frames): OK or QC-fail, bar height = residual missing fraction; E8 has 6 QC-fail frames (10:00–12:30 UTC), kept and flagged</td>
+<td>Cube <code>qc_status</code>, <code>qc_missing_frac</code></td>
+</tr>
+<tr>
+<td>Source status</td>
+<td>CPC merged IR AVAILABLE (FALLBACK); Meteosat-9 and INSAT NOT CONNECTED; IMD DWR and lightning UNAVAILABLE; IMD hail report AVAILABLE (context only)</td>
+<td>DATA_REALITY; bundle <code>health.json</code></td>
+</tr>
+<tr>
+<td>Confidence</td>
+<td>Skill ribbon at every lead; leads beyond validated skill de-emphasised (baselines: useful FSS 40 km; ML: pooled BSS &gt; 0, with a &quot;small&quot; warning when BSS &lt; 0.1)</td>
+<td><code>skill.json</code></td>
+</tr>
+<tr>
+<td>Calibration / reliability</td>
+<td>Reliability diagrams and ECE per lead bin (Table 13)</td>
+<td><code>reliability.csv</code></td>
+</tr>
+<tr>
+<td>Uncertainty</td>
+<td>Within-event block-bootstrap intervals per event (Table 12)</td>
+<td><code>bootstrap_ml_vs_pysteps.csv</code></td>
+</tr>
+<tr>
+<td>Scorable area</td>
+<td>Unscorable fraction by lead (E8: 9 % at 30 min → 35 % at 6 h)</td>
+<td>Phase-2 metrics</td>
+</tr>
+<tr>
+<td>Model card</td>
+<td>ml-v0: algorithm, 216 trees, train/validation days, held-out events, threshold p ≥ 0.5, artifact hashes</td>
+<td><code>model_card.json</code></td>
+</tr>
+<tr>
+<td>Limitations</td>
+<td>Listed on screen and in FINAL_CLAIMS §D</td>
+<td><code>health.json</code></td>
+</tr>
+<tr>
+<td>Hashes / provenance</td>
+<td>Raw-file SHA-256 per frame; bundle input hashes (verified against the freeze manifest); freeze-manifest hash</td>
+<td><code>manifest.json</code>, <code>docs/FREEZE_ml-v0.json</code></td>
+</tr>
+</tbody></table>
+<p><em>Table 17.</em> Data-health and uncertainty elements.</p>
+<p><figure><img src="file:///Users/admin/Documents/NEW PS SIH/apps/web/e2e-shots/verify/7_health.png" alt="Data health"/></figure></p>
+<p><em>Figure 17.</em> Data Health screen: source status, QC strip, model card.</p>
+<h1>22. Testing and reproducibility</h1>
+<table>
+<thead>
+<tr>
+<th>Suite</th>
+<th>Scope</th>
+<th>Final result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Python, <code>tests/test_phase1.py</code></td>
+<td>Decoding (scaling, missing, row order), source/target grids, movement, QC flags, phase rules v0, raw-file checksums, cube timing, physical tracks</td>
+<td>10 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase2.py</code></td>
+<td>Scores, FSS = pySTEPS FSS, leakage (future frames destroyed), baseline hashes</td>
+<td>7 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase3.py</code></td>
+<td>Overlap linking, merge/split once, threshold, causality, centroid, E8 v2 validity, Phase 1–2 unchanged</td>
+<td>13 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase4.py</code></td>
+<td>Bootstrap, event selection rule, raw files = manifest, identical protocol, identical pixels, recomputed scores, provenance</td>
+<td>16 tests (1 skipped: excluded event E8a)</td>
+</tr>
+<tr>
+<td><code>tests/test_phase5.py</code></td>
+<td>Exact bias factorisation, re-scoring = Phase 4, oracle, lifecycle gate STOP, causality</td>
+<td>8 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase6.py</code></td>
+<td>Split/leakage rules, feature causality, sampling weights, dataset re-sampling, training reproducibility, calibration on validation, baselines = Phase 4, identical pixels, one held-out forecast recomputed, download resume, window builder</td>
+<td>13 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase7_freeze.py</code></td>
+<td>All frozen files unchanged; frozen model = evaluated model</td>
+<td>2 tests</td>
+</tr>
+<tr>
+<td><code>tests/test_phase8_bundle.py</code></td>
+<td>Bundle inputs = frozen files; output hashes; displayed skill = frozen tables; scores = per-issue table; unique exercise alerts; no future information; tiles reproduce ML probability; event index</td>
+<td>8 tests</td>
+</tr>
+<tr>
+<td><strong>Python total</strong></td>
+<td><code>.venv/bin/python -m pytest -q</code></td>
+<td><strong>76 passed, 1 skipped</strong></td>
+</tr>
+<tr>
+<td>Web unit (Vitest)</td>
+<td>Colour scales, tile decoding, CAP exercise format, time formatting</td>
+<td><strong>6 / 6 pass</strong></td>
+</tr>
+<tr>
+<td>Browser end-to-end (Playwright, headless Chromium, production build)</td>
+<td>Full E8 demo flow with no page errors and frozen numbers on screen; E10 opens; unavailable events cannot be opened</td>
+<td><strong>2 / 2 pass</strong></td>
+</tr>
+<tr>
+<td>Build</td>
+<td><code>npm run build</code> (TypeScript type-check + Vite production build); fresh <code>npm ci</code> from the lockfile</td>
+<td><strong>Pass</strong></td>
+</tr>
+<tr>
+<td>Local-run verification</td>
+<td>Browser pass with the basemap on: map-click selection, playback, keyboard navigation, CAP download, E10/E11, 1280-px layout</td>
+<td>0 console errors, 0 page errors, 0 failed local requests, 146/146 map tiles</td>
+</tr>
+<tr>
+<td>Freeze manifest</td>
+<td><code>docs/FREEZE_ml-v0.json</code>: 386 files, SHA-256 <code>b5c48807bab48dcc…</code>, frozen 2026-09-25T07:26:44 UTC</td>
+<td>Freeze guard passes</td>
+</tr>
+<tr>
+<td>Byte-identical reruns</td>
+<td>Baselines (Phase 2), v2 tracks (Phase 3), cross-event tables (Phase 4), reliability gate (Phase 5), dataset days and training (Phase 6)</td>
+<td>Verified</td>
+</tr>
+<tr>
+<td>Secret scan</td>
+<td><strong>Not performed</strong> in Phases 1–9. Documented controls only: no credentials used or stored (no MOSDAC/EUMETSAT accounts); <code>.env</code> is git-ignored</td>
+<td>Manual item</td>
+</tr>
+</tbody></table>
+<p><em>Table 18.</em> Test and reproducibility summary. Sources: SUBMISSION_CHECKLIST §7; PROVENANCE; test files.</p>
+<p><strong>Isolation.</strong> The prototype needs no server-side state. The bundles are static files, alert approvals stay in the viewer&#39;s browser storage, and a fresh <code>npm ci</code> + build from the lockfile was verified.</p>
+<h1>23. Running the prototype</h1>
+<p><strong>Prerequisites.</strong></p>
+<ul>
+<li>Python 3.11 virtual environment at <code>.venv</code> with <code>requirements.txt</code>. pySTEPS 1.21.5 must be built from the PyPI source with <code>-fopenmp</code> removed on macOS arm64 (BASELINE_EVAL §9).</li>
+<li>Node.js ≥ 18 (verified with 26.7.0) and npm.</li>
+<li>Internet for the basemap and fonts. Both are optional: untick <em>Basemap</em> for offline use.</li>
+</ul>
+<p><strong>Commands (from the repository root)</strong>, as verified in the local-run check:</p>
+<pre><code class="language-bash"># start the demo (bundles and npm packages already present)
+cd apps/web &amp;&amp; npm run build &amp;&amp; npm run preview          # -&gt; http://localhost:4173/
+
+# fresh checkout: rebuild bundles only if apps/web/public/bundles/ is missing (~4 min), then install
+.venv/bin/python -m pipelines.replay.build_bundle --event E8_20260514 E10_20260504 E11_20260516
+cd apps/web &amp;&amp; npm ci &amp;&amp; npm run build &amp;&amp; npm run preview
+
+# tests
+.venv/bin/python -m pytest -q                            # Python suite incl. freeze guard
+cd apps/web &amp;&amp; npm test                                  # web unit tests
+cd apps/web &amp;&amp; npx playwright install chromium &amp;&amp; npm run e2e   # browser tests
+</code></pre>
+<p><strong>Notes.</strong></p>
+<ul>
+<li>Port 4173 must be free; otherwise Vite uses the next port, so read the printed URL.</li>
+<li>Use a fresh private window for a clean demo (Alert Center approvals persist in browser storage).</li>
+<li>No other deployment (server, container, cloud) exists or is claimed.</li>
+</ul>
+<h1>24. Use cases / impact</h1>
+<p>These are <strong>intended uses of a research prototype</strong>. None has been field-tested, and no operational use by any government agency is claimed.</p>
+<table>
+<thead>
+<tr>
+<th>Use case</th>
+<th>What the prototype supports today</th>
+<th>Evidence level</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Meteorological situational awareness</td>
+<td>Satellite IR situation map with tracked cold cells and motion, and a probability map of deep convection with its validated skill</td>
+<td>Validated on 3 held-out days (grid)</td>
+</tr>
+<tr>
+<td>Storm monitoring</td>
+<td>Per-cell card, history and advected track; top-5 cells by ML risk</td>
+<td>Diagnostic (cell skill only to 30 min)</td>
+</tr>
+<tr>
+<td>Disaster-management decision support</td>
+<td>Place-level draft advisories for human review; CAP 1.2 export (<code>status=Exercise</code>)</td>
+<td>Exercise only; alert skill not verified</td>
+</tr>
+<tr>
+<td>Historical event analysis</td>
+<td>Replay of real days (<em>knew / predicted / happened</em>) with method switching</td>
+<td>Implemented</td>
+</tr>
+<tr>
+<td>Research / validation</td>
+<td>Reproducible test bed: same baselines, same pixels, frozen evidence, bootstrap intervals; any new model can be scored the same way</td>
+<td>Implemented</td>
+</tr>
+</tbody></table>
+<p><em>Table 19.</em> Supported use cases. Coverage potential: geostationary IR covers all of India every 30 min, including areas without radar. The prototype was validated only over NW India.</p>
+<h1>25. Limitations</h1>
+<table>
+<thead>
+<tr>
+<th>Limitation</th>
+<th>Current impact</th>
+<th>Future improvement</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Only 3 held-out event days</strong> (E8, E10, E11)</td>
+<td>No cross-event significance (best sign test p = 0.125); E11 weak (base rate 0.4 %)</td>
+<td>Multi-season, multi-region event set</td>
+</tr>
+<tr>
+<td><strong>May 2026, NW India only</strong></td>
+<td>Nothing shown for monsoon, cloudbursts, other regions or years</td>
+<td>Monsoon and other-region events</td>
+</tr>
+<tr>
+<td><strong>Backward-in-time ML test</strong></td>
+<td>Training (18–31 May) follows the test days; ±1-day buffers limit, but do not rule out, weather-regime overlap</td>
+<td>Forward test on new days after 31 May, or on pre-2026 archives</td>
+</tr>
+<tr>
+<td><strong>Thin training data</strong></td>
+<td>14 training days, 7 convective (exactly the gate minimum)</td>
+<td>Longer archive</td>
+</tr>
+<tr>
+<td><strong>30-minute cadence</strong></td>
+<td>No 15-min leads; motion from 60 min of history</td>
+<td>15-min Meteosat-9 / INSAT-3DS</td>
+</tr>
+<tr>
+<td><strong>Single IR source / channel</strong></td>
+<td>No water-vapour, visible or tri-spectral cues for initiation</td>
+<td>Multi-channel satellite input</td>
+</tr>
+<tr>
+<td><strong>Source substitution</strong></td>
+<td>NOAA CPC merged IR stands in for Meteosat/INSAT; satellite-ID code unverified</td>
+<td>Connect the approved sources</td>
+</tr>
+<tr>
+<td><strong>Parallax</strong></td>
+<td>Not corrected; product status unverified; cloud-top positions may be displaced</td>
+<td>Parallax correction / verification</td>
+</tr>
+<tr>
+<td><strong>No independent radar or lightning validation</strong></td>
+<td>Truth is the same satellite field; tracking and hazard claims unvalidated</td>
+<td>IMD DWR, NRSC/IITM lightning where access allows</td>
+</tr>
+<tr>
+<td><strong>Edge effects</strong></td>
+<td>Long-lead baseline scores cover a shrinking region (E8 unscorable 9 → 35 %); pySTEPS has no inflow forecast</td>
+<td>Larger motion domain than scoring domain</td>
+</tr>
+<tr>
+<td><strong>Tracking uncertainty</strong></td>
+<td>Area jumps ≈ 28 %; 21–35 % direction reversals; phase rules v0 unvalidated</td>
+<td>Manual labels / radar tracks; better segmentation</td>
+</tr>
+<tr>
+<td><strong>ML binary performance</strong></td>
+<td>At p ≥ 0.5, no gain over pySTEPS beyond 60 min; CSI 0 from 150 min</td>
+<td>Validation-chosen operating point (new version, new test days)</td>
+</tr>
+<tr>
+<td><strong>ML mechanism</strong></td>
+<td>Mostly calibrated smoothing of pySTEPS; initiation skill not shown</td>
+<td>Initiation-specific target and score</td>
+</tr>
+<tr>
+<td><strong>No live feed</strong></td>
+<td>No latency model, no real-time ingestion</td>
+<td>Live pipeline with latency model</td>
+</tr>
+<tr>
+<td><strong>Prototype / replay only</strong></td>
+<td>Static bundles; exercise alerts only; not an official warning</td>
+<td>Operational design with IMD/NCMRWF</td>
+</tr>
+<tr>
+<td><strong>Hazards</strong></td>
+<td>No hail, lightning, rain, downburst or cloudburst skill</td>
+<td>Hazard-specific truth and models</td>
+</tr>
+<tr>
+<td><strong>Basemap</strong></td>
+<td>Esri terms and boundary depiction for a public deployment unverified</td>
+<td>Approved basemap (e.g. Survey of India compliant)</td>
+</tr>
+</tbody></table>
+<p><em>Table 20.</em> Limitations. Sources: FINAL_CLAIMS §C–§D; MULTI_EVENT §9; ML_PROTOTYPE §7; TRACKING_AUDIT; FIRST_EVENT.</p>
+<h1>26. Future scope</h1>
+<p><strong>All items below are NOT CURRENTLY IMPLEMENTED.</strong></p>
+<ol>
+<li><strong>Forward-in-time validation</strong> on storm days after 31 May 2026, or on pre-2026 archives (e.g. GPM_MERGIR via Earthdata; access not verified).</li>
+<li><strong>Additional Indian satellite sources.</strong> INSAT-3DR/3DS via MOSDAC and Meteosat-9 IODC via EUMETSAT, with multi-channel input (water vapour, split-window, visible).</li>
+<li><strong>Higher temporal resolution:</strong> 15-min imagery and 15-min leads.</li>
+<li><strong>Radar and lightning integration</strong> as independent truth and as inputs (IMD DWR; NRSC LDSN / IITM ILLN), where access allows.</li>
+<li><strong>Improved storm-initiation modelling,</strong> with an initiation-specific score (VALIDATION_PLAN §2, CI objects).</li>
+<li><strong>Lifecycle modelling, only if justified.</strong> Revisit only if more reliable tracking truth makes lifecycle tendencies persistent; the Phase-5 gate currently says STOP.</li>
+<li><strong>Operational data pipeline:</strong> live ingestion with a latency model (REPLAY_SPEC §3), API (FastAPI) and storage (PostGIS), as designed in ARCHITECTURE.</li>
+<li><strong>Uncertainty-aware forecasting.</strong> Conformal intervals for cell ETAs (VALIDATION_PLAN §6), and a validation-chosen probability operating point evaluated on new held-out days.</li>
+<li><strong>Larger multi-season validation:</strong> monsoon events, cloudburst cases, other regions, and bootstrap by event day with enough events for significance.</li>
+</ol>
+<h1>27. Conclusion</h1>
+<p>The project delivers a <strong>reproducible, satellite-first nowcasting prototype</strong> for SIH26084, built entirely on real, openly obtainable data.</p>
+<p><strong>What was shown, on three held-out hail-report days in May 2026 over NW India:</strong></p>
+<ul>
+<li><strong>Baselines:</strong> motion extrapolation (pySTEPS) consistently beats persistence, and useful extrapolation skill ends at about 2 h.</li>
+<li><strong>Error diagnosis:</strong> the growing over-forecast at long leads is mostly a scoring-edge effect.</li>
+<li><strong>ML:</strong> a lightweight, leakage-safe ML model gives <strong>the best calibrated probability forecasts of deep convection to about 4 h</strong>. It does <strong>not</strong> improve yes/no forecasts beyond 1 h, and it does not demonstrate storm-initiation skill.</li>
+<li><strong>Tracking:</strong> tracking was audited before use, and cell-level results are reported as diagnostic only.</li>
+<li><strong>Freeze:</strong> all evidence is frozen, hashed and guarded by tests.</li>
+<li><strong>Dashboard:</strong> a working replay dashboard shows each forecast with its validated skill, data health and limitations. Advisories are exercise drafts that require human approval.</li>
+</ul>
+<p><strong>Limits stated alongside the results:</strong> few events, a backward-in-time ML test, a single 30-min IR channel, unverified parallax, and no independent radar or lightning truth.</p>
+<h1>28. References</h1>
+<p>References are those already documented in the project (research report, VALIDATION_PLAN, PROVENANCE). No other sources were used.</p>
+<ol>
+<li>SIH 2026 Problem Statements portal, PS SIH26084. <a href="https://sih.gov.in/sih2026PS">https://sih.gov.in/sih2026PS</a></li>
+<li>SIH 2026 Guidelines. <a href="https://sih.gov.in/letters/2026/SIH%202026%20Guidelines.pdf">https://sih.gov.in/letters/2026/SIH%202026%20Guidelines.pdf</a></li>
+<li>SIH 2026 Idea Presentation Format. <a href="https://sih.gov.in/letters/2026/SIH2026-IDEA-Presentation-Format.pptx">https://sih.gov.in/letters/2026/SIH2026-IDEA-Presentation-Format.pptx</a></li>
+<li>NOAA/NCEP/CPC Globally Merged IR (4 km, 30 min). <a href="https://ftp.cpc.ncep.noaa.gov/precip/global_full_res_IR/">https://ftp.cpc.ncep.noaa.gov/precip/global_full_res_IR/</a></li>
+<li>IMD RMC New Delhi, <em>Hail storm report of the Northwest India</em> (updated 16 May 2026). <a href="https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf">https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf</a></li>
+<li>Pulkkinen, S. et al. (2019). pysteps: an open-source Python library for probabilistic precipitation nowcasting. <em>Geosci. Model Dev.</em> 12, 4185. <a href="https://gmd.copernicus.org/articles/12/4185/2019/">https://gmd.copernicus.org/articles/12/4185/2019/</a> · <a href="https://github.com/pySTEPS/pysteps">https://github.com/pySTEPS/pysteps</a></li>
+<li>Heikenfeld, M. et al. (2019). tobac. <em>Geosci. Model Dev.</em> 12, 4551. <a href="https://gmd.copernicus.org/articles/12/4551/2019/">https://gmd.copernicus.org/articles/12/4551/2019/</a> · Sokolowsky, G. A. et al. (2024). tobac v1.5. <em>Geosci. Model Dev.</em> 17, 5309. <a href="https://gmd.copernicus.org/articles/17/5309/2024/">https://gmd.copernicus.org/articles/17/5309/2024/</a> · <a href="https://github.com/tobac-project/tobac">https://github.com/tobac-project/tobac</a></li>
+<li>Dixon, M. &amp; Wiener, G. (1993). TITAN: Thunderstorm Identification, Tracking, Analysis, and Nowcasting. <em>J. Atmos. Oceanic Technol.</em> <a href="https://doi.org/10.1175/1520-0426(1993)010%3C0785:TTIDTA%3E2.0.CO;2">https://doi.org/10.1175/1520-0426(1993)010%3C0785:TTIDTA%3E2.0.CO;2</a></li>
+<li>Roberts, N. M. &amp; Lean, H. W. (2008). Fractions Skill Score (as defined in VALIDATION_PLAN §2 and implemented in <code>ml/verification/scores.py</code>).</li>
+<li>Cintineo, J. L. et al. (2024). ProbSevere v3. <em>Weather and Forecasting</em> 39(12). <a href="https://journals.ametsoc.org/view/journals/wefo/39/12/WAF-D-24-0076.1.pdf">https://journals.ametsoc.org/view/journals/wefo/39/12/WAF-D-24-0076.1.pdf</a></li>
+<li>NWCSAF Rapidly Developing Thunderstorms (RDT-CW) description. <a href="https://www.nwcsaf.org/rdt_description_2025">https://www.nwcsaf.org/rdt_description_2025</a></li>
+<li>MeteoSwiss TRT (Thunderstorms Radar Tracking). <a href="https://www.meteoswiss.admin.ch/about-us/research-and-cooperation/projects/en/2002/trt.html">https://www.meteoswiss.admin.ch/about-us/research-and-cooperation/projects/en/2002/trt.html</a></li>
+<li>IMD nowcasting with WDSS-II. <a href="https://link.springer.com/article/10.1007/s00703-014-0315-7">https://link.springer.com/article/10.1007/s00703-014-0315-7</a> · <a href="https://nwp.imd.gov.in/WDSSII_website.pdf">https://nwp.imd.gov.in/WDSSII_website.pdf</a></li>
+<li>MOSDAC data access policy. <a href="https://www.mosdac.gov.in/data-access-policy">https://www.mosdac.gov.in/data-access-policy</a> · INSAT-3DR/3DS: <a href="https://mosdac.gov.in/insat-3dr">https://mosdac.gov.in/insat-3dr</a>, <a href="https://mosdac.gov.in/insat-3ds">https://mosdac.gov.in/insat-3ds</a></li>
+<li>EUMETSAT Data Store, Meteosat IODC SEVIRI (EO:EUM:DAT:MSG:HRSEVIRI-IODC). <a href="https://data.eumetsat.int/product/EO:EUM:DAT:MSG:HRSEVIRI-IODC">https://data.eumetsat.int/product/EO:EUM:DAT:MSG:HRSEVIRI-IODC</a></li>
+<li>DownToEarth: IMD locking up its AWS/ARG data portal. <a href="https://www.downtoearth.org.in/climate-change/imd-locking-up-its-awsarg-data-portal-hampers-public-weather-alerts-experts">https://www.downtoearth.org.in/climate-change/imd-locking-up-its-awsarg-data-portal-hampers-public-weather-alerts-experts</a></li>
+<li>Project documents: <code>SIH26084_Research_Report.md</code>, <code>docs/PRD.md</code>, <code>docs/ARCHITECTURE.md</code>, <code>docs/DATA_REALITY.md</code>, <code>docs/VALIDATION_PLAN.md</code>, <code>docs/REPLAY_SPEC.md</code>, <code>docs/UI_UX_SPEC.md</code>, <code>docs/FIRST_EVENT.md</code>, <code>docs/BASELINE_EVAL.md</code>, <code>docs/TRACKING_AUDIT.md</code>, <code>docs/MULTI_EVENT.md</code>, <code>docs/DECAY_AWARE.md</code>, <code>docs/ML_PROTOTYPE.md</code>, <code>docs/FINAL_CLAIMS.md</code>, <code>docs/FINAL_RESULTS.md</code>, <code>docs/PRODUCT_DEMO.md</code>, <code>data/PROVENANCE.md</code>.</li>
+</ol>
+<div class="pb"></div>
+
+<h1>29. Appendices</h1>
+<h2>Appendix A — Frozen metrics</h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+<th>Source file</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BSS, ML (30 / 60 / 120 / 180 / 240 / 360 min)</td>
+<td>0.67 / 0.51 / 0.27 / 0.13 / 0.06 / −0.03</td>
+<td><code>data/processed/ml_eval/ml-v0/metrics_pooled_lead.csv</code></td>
+</tr>
+<tr>
+<td>BSS, NP31</td>
+<td>0.63 / 0.41 / 0.02 / −0.23 / −0.37 / −0.59</td>
+<td>same</td>
+</tr>
+<tr>
+<td>BSS, pySTEPS</td>
+<td>0.44 / 0.10 / −0.38 / −0.67 / −0.82 / −1.11</td>
+<td>same</td>
+</tr>
+<tr>
+<td>BSS, persistence</td>
+<td>0.32 / −0.04 / −0.47 / −0.69 / −0.78 / −0.84</td>
+<td>same</td>
+</tr>
+<tr>
+<td>CSI (p ≥ 0.5), ML</td>
+<td>0.583 / 0.452 / 0.243 / 0.000 / 0.000 / 0.000</td>
+<td>same</td>
+</tr>
+<tr>
+<td>CSI, pySTEPS / persistence (pooled)</td>
+<td>0.586 / 0.429 / 0.258 / 0.172 / 0.122 / 0.049 · 0.511 / 0.342 / 0.176 / 0.092 / 0.052 / 0.022</td>
+<td>same; <code>cross_event_by_lead.csv</code></td>
+</tr>
+<tr>
+<td>Useful FSS 40 km</td>
+<td>90 min (P), 120 min (A), all 3 events</td>
+<td><code>decay_by_event.csv</code></td>
+</tr>
+<tr>
+<td>ECE, ML</td>
+<td>0.0022 / 0.0034 / 0.0042 / 0.0026</td>
+<td><code>reliability.csv</code></td>
+</tr>
+<tr>
+<td>Bias, E8 6 h</td>
+<td>2.61 = 3.76 × 0.73 × 0.96; whole domain 0.70</td>
+<td><code>phase5/decomposition_by_lead.csv</code></td>
+</tr>
+<tr>
+<td>Tracking, E8</td>
+<td>ID switches 0.206 → 0.004; zero-overlap 0.057 → 0; reversals 0.47 → 0.35</td>
+<td><code>audit_v1.json</code>, <code>audit_v2_none.json</code></td>
+</tr>
+<tr>
+<td>Object diagnostic, 30 min</td>
+<td>0.59 / 0.62 / 0.57 (E8 / E10 / E11)</td>
+<td><code>object_diagnostics_by_event.csv</code></td>
+</tr>
+</tbody></table>
+<h2>Appendix B — Event table</h2>
+<p>See Table 15.</p>
+<p><strong>Event-day exclusions for ML:</strong></p>
+<ul>
+<li>30 Apr–2 May (E8a);</li>
+<li>3–5 May (E10);</li>
+<li>13–15 May (E8);</li>
+<li>15–17 May (E11).</li>
+</ul>
+<p><strong>Frames per day:</strong> 48 (00:00–23:30 UTC). <strong>Issue times per day:</strong> 45.</p>
+<h2>Appendix C — Technology stack</h2>
+<p>See Table 1. <strong>Not used:</strong> SatPy, rasterio, MetPy, Tailwind CSS, deck.gl, LightGBM, PyTorch, SHAP, xskillscore, FastAPI, PostGIS, Docker.</p>
+<h2>Appendix D — Test summary</h2>
+<p>See Table 18.</p>
+<ul>
+<li><strong>Python:</strong> 77 tests collected (10 + 7 + 13 + 16 + 8 + 13 + 2 + 8), 76 passed and 1 skipped.</li>
+<li><strong>Web:</strong> 6 unit tests and 2 end-to-end tests pass.</li>
+<li><strong>Build:</strong> passes.</li>
+</ul>
+<h2>Appendix E — Reproducibility information</h2>
+<ul>
+<li>Raw data: <code>data/raw/cpc_merged_ir/manifest.json</code> (URL, Last-Modified, bytes, SHA-256 per file).</li>
+<li>Configs: <code>config/domain.yaml</code>, <code>tracking.yaml</code>, <code>tracking_v2.yaml</code>, <code>baseline.yaml</code>, <code>phases.yaml</code>, <code>events.yaml</code>, <code>ml_dataset.yaml</code>.</li>
+<li>Per-phase provenance: <code>baseline_provenance.json</code>, <code>run_summary.json</code>, <code>multi_event_provenance.json</code>, <code>decomposition_provenance.json</code>, <code>lifecycle_decision.json</code>, <code>dataset_manifest.json</code>, <code>model_card.json</code>, <code>evaluation_provenance.json</code>, the bundle <code>manifest.json</code> files, and <code>data/PROVENANCE.md</code>.</li>
+<li>Environment: Python 3.11.16; package versions in Table 1 and in <code>docs/FREEZE_ml-v0.json</code>.</li>
+</ul>
+<h2>Appendix F — Model freeze / provenance</h2>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>SHA-256</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>data/models/ml-v0/model.joblib</code></td>
+<td><code>597e3c06c5db7ec2f6c9e7e847b49a7743949a1a69a01ca20285d56c52f51857</code></td>
+</tr>
+<tr>
+<td><code>data/models/ml-v0/calibrators.joblib</code></td>
+<td><code>0da01eb8bd2f35988141c5fdcab03658bcc6e4136bfb2299a85a72a7aacc1bc7</code></td>
+</tr>
+<tr>
+<td><code>data/models/ml-v0/model_card.json</code></td>
+<td><code>2a763b0aaeae985834bf22fc47b2e6d0fa367975892759439c94049c2f29728e</code></td>
+</tr>
+<tr>
+<td><code>config/ml_dataset.yaml</code></td>
+<td><code>bda7c3859a93474d9329286e905a58f8a76dba6af2acf6bdc848d7e0628fe4f4</code></td>
+</tr>
+<tr>
+<td>Dataset manifest</td>
+<td><code>9e66e49a1485e3bda6c9e051ba58937d43a11bbc1591f67367fab8e5db9459fe</code></td>
+</tr>
+<tr>
+<td>Evaluation provenance</td>
+<td><code>d2dadac4140240f0a9eb255a2d13c86543f88685fa30cbc9efddc5b50bc32784</code></td>
+</tr>
+<tr>
+<td><code>docs/FREEZE_ml-v0.json</code> (386 files, frozen 2026-09-25T07:26:44 UTC)</td>
+<td><code>b5c48807bab48dccab1706d6d2bc144260cd4f3249dc533b09647323d653fe35</code></td>
+</tr>
+</tbody></table>
+<p><em>Source:</em> <code>data/PROVENANCE.md</code> §Phase 7.</p>
+<h2>Appendix G — Demo flow</h2>
+<p>The verified E8 browser flow (DEMO_VIDEO_SCRIPT, 4:40):</p>
+<ol>
+<li>Open event <strong>E8 · 14 May 2026</strong>.</li>
+<li><strong>Situation at 14:00 UTC:</strong> 9 cells.</li>
+<li><strong>Select cell #108:</strong> Developing, 216.1 K.</li>
+<li><strong>0–6 h Forecast:</strong> pySTEPS, then <strong>ML probability</strong> at T+2h (ribbon: CSI 0.243 · BSS 0.27 · FSS40 0.53).</li>
+<li><strong>Historical Replay:</strong> B toggle and playback, 14:00 → 15:00.</li>
+<li><strong>Model Performance</strong> (key 8).</li>
+<li><strong>Data Health</strong> (key 9): 6 QC-fail frames.</li>
+<li>Optional <strong>Alert Center</strong> at 08:00 UTC: approve Shopian, then CAP <code>status=Exercise</code>.</li>
+</ol>
+<p><em>End of report.</em></p>
+<script>
+mermaid.initialize({ startOnLoad: false, theme: "neutral", themeVariables: { fontSize: "15px" }, flowchart: { useMaxWidth: true, htmlLabels: true }, securityLevel: "loose" });
+window.__errors = [];
+mermaid.run({ querySelector: ".mermaid", suppressErrors: false }).then(() => { window.__done = true; })
+  .catch((e) => { window.__errors.push(String(e)); window.__done = true; });
+</script></body></html>

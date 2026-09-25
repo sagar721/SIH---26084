@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Jammu",
+    "printed_as": "Jammu",
+    "state_hint": "Jammu and Kashmir",
+    "query": "Jammu, Jammu and Kashmir, India",
+    "lat": 32.7185614,
+    "lon": 74.8580917,
+    "osm_display_name": "Jammu, Jammu district, Jammu and Kashmir, 180001, India",
+    "status": "OK"
+  },
+  {
+    "name": "Dehradun",
+    "printed_as": "Dehradun",
+    "state_hint": "Uttarakhand",
+    "query": "Dehradun, Uttarakhand, India",
+    "lat": 30.3255646,
+    "lon": 78.0436813,
+    "osm_display_name": "Dehradun, Uttarakhand, 248001, India",
+    "status": "OK"
+  },
+  {
+    "name": "Mukteshwar",
+    "printed_as": "Mukteshwar",
+    "state_hint": "Uttarakhand",
+    "query": "Mukteshwar, Uttarakhand, India",
+    "lat": 29.4720782,
+    "lon": 79.6480433,
+    "osm_display_name": "Mukteshwar, Dhari, Nainital, Uttarakhand, 263138, India",
+    "status": "OK"
+  },
+  {
+    "name": "Jolly Grant",
+    "printed_as": "Jollygrant",
+    "state_hint": "Uttarakhand",
+    "query": "Jolly Grant, Uttarakhand, India",
+    "lat": 30.1922324,
+    "lon": 78.1899791,
+    "osm_display_name": "Dehradun Jolly Grant Airport, NH7, Bhaniyawala, Rishikesh, Dehradun, Uttarakhand, 248016, India",
+    "status": "OK"
+  },
+  {
+    "name": "Amritsar",
+    "printed_as": "Amritsar",
+    "state_hint": "Punjab",
+    "query": "Amritsar, Punjab, India",
+    "lat": 31.6356659,
+    "lon": 74.8787496,
+    "osm_display_name": "Amritsar, Amritsar I Tahsil, Amritsar, Punjab, 143001, India",
+    "status": "OK"
+  },
+  {
+    "name": "Patiala",
+    "printed_as": "Patiala",
+    "state_hint": "Punjab",
+    "query": "Patiala, Punjab, India",
+    "lat": 30.2092778,
+    "lon": 76.3397231,
+    "osm_display_name": "Patiala, Punjab, India",
+    "status": "OK"
+  },
+  {
+    "name": "Hisar",
+    "printed_as": "Hisar",
+    "state_hint": "Haryana",
+    "query": "Hisar, Haryana, India",
+    "lat": 29.2396596,
+    "lon": 75.8174505,
+    "osm_display_name": "Hisar, Haryana, India",
+    "status": "OK"
+  },
+  {
+    "name": "Bhiwani",
+    "printed_as": "Bhiwani",
+    "state_hint": "Haryana",
+    "query": "Bhiwani, Haryana, India",
+    "lat": 28.7931703,
+    "lon": 76.1391283,
+    "osm_display_name": "Bhiwani, Haryana, 125021, India",
+    "status": "OK"
+  },
+  {
+    "name": "Sirsa",
+    "printed_as": "Sirsa",
+    "state_hint": "Haryana",
+    "query": "Sirsa, Haryana, India",
+    "lat": 29.6063041,
+    "lon": 74.9036568,
+    "osm_display_name": "Sirsa, Haryana, India",
+    "status": "OK"
+  },
+  {
+    "name": "Aligarh",
+    "printed_as": "Aligarh",
+    "state_hint": "Uttar Pradesh",
+    "query": "Aligarh, Uttar Pradesh, India",
+    "lat": 27.8761073,
+    "lon": 78.1358153,
+    "osm_display_name": "Aligarh, Uttar Pradesh, India",
+    "status": "OK"
+  }
+]

@@ -1,0 +1,60 @@
+# Phase-6 ML prototype (docs/ML_PROTOTYPE.md). Everything here is fixed BEFORE training and BEFORE any test scoring.
+# Target: observed BT < 235 K at pixel x and valid time t+L (the Phase-2/4 grid event; no new labels).
+version: ml-v0
+target_bt_K: 235.0
+
+splits:
+  # Held-out test = the Phase-4 evaluation events. Never used for fitting, calibration, n_iter or feature choices.
+  test: [E8_20260514, E10_20260504, E11_20260516]
+  # Event days excluded from everything (VALIDATION_PLAN §3): all events.yaml days incl. the unsuitable E8a, +/-1 day.
+  excluded_event_days: ["2026-05-01", "2026-05-04", "2026-05-14", "2026-05-16"]
+  buffer_days: 1
+  # Calendar-day blocks from the approved NOAA CPC merged-IR archive (same source, same preprocessing).
+  # The archive starts 2026-05-01 (only 30-31 Mar before it), so training cannot precede the test events:
+  # the training block lies AFTER them (backward-in-time test) - stated as a limitation.
+  train: {start: "2026-05-18", end: "2026-05-31"}     # 14 days
+  validation: {start: "2026-05-06", end: "2026-05-12"} # 7 days: n_iter selection + isotonic calibration only
+
+# Sufficiency gate (task 11): proceed only if enough convective days exist, using the Phase-4 suitability rule
+# (48 frames and BT < 235 K present in >= 50 % of frames). Otherwise STOP.
+sufficiency: {min_convective_train_days: 7, min_convective_val_days: 3, deep_frame_frac: 0.5}
+
+features:   # all computed from frames <= issue frame k (plus the pySTEPS forecast issued at k)
+  - lead_min
+  - adv_bt              # pySTEPS BT forecast at t+L (NaN in the inflow edge), config/baseline.yaml unchanged
+  - adv_frac11          # fraction of adv_bt < 235 K in 11x11 px (22 km)
+  - adv_frac31          # same in 31x31 px (62 km)
+  - adv_min11           # min adv_bt in 11x11 px
+  - adv_valid_frac31    # fraction of finite adv_bt in 31x31 px (distance-to-inflow-edge proxy)
+  - pers_bt             # BT(t)
+  - pers_frac31         # fraction of BT(t) < 235 K in 31x31 px
+  - pers_min11          # min BT(t) in 11x11 px
+  - tend30              # BT(t) - BT(t-30 min) at the pixel (Eulerian)
+  - adv_tend            # the 30-min tendency field advected with the same pySTEPS motion to t+L
+  - adv_tend_mean31     # NaN-aware mean of adv_tend in 31x31 px
+  - speed_px            # |pySTEPS velocity| at the pixel (px / 30 min)
+  - dom_cold_frac       # domain fraction of BT(t) < 235 K
+  - dom_cold_change60   # dom_cold_frac(t) - dom_cold_frac(t-60 min)
+  - valid_hour_sin      # sin(2 pi hour_utc(t+L) / 24)
+  - valid_hour_cos
+# Not used (declared): latitude/longitude and terrain - 14 training days cannot support a location climatology.
+
+sampling:   # per (day, issue, lead): stratified pixel sample with inverse-probability weights (unbiased)
+  seed: 20260925
+  per_stratum: {event: 150, near_cold_non_event: 150, far_non_event: 60}   # near_cold: adv_frac31>0 or pers_frac31>0
+
+model:
+  kind: sklearn.ensemble.HistGradientBoostingClassifier   # histogram GBDT (LightGBM family); LightGBM not installed
+  params: {learning_rate: 0.05, max_iter: 400, max_leaf_nodes: 31, min_samples_leaf: 500, l2_regularization: 1.0,
+           early_stopping: false, random_state: 0}
+  n_iter_selection: "min weighted log-loss on the validation days (staged predictions), then refit with that max_iter"
+calibration:
+  method: isotonic
+  fit_on: validation
+  lead_bins_min: [[30, 30], [60, 60], [90, 120], [150, 360]]
+
+scoring:    # VALIDATION_PLAN §2 gridded task
+  deterministic_threshold_p: 0.5      # CSI @ p >= 0.5
+  fss_scales_px: [5, 10, 20]
+  reliability_bins: 10
+  reference_neighbourhood_px: 31      # no-fit reference: pySTEPS neighbourhood fraction (the adv_frac31 feature)

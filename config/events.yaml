@@ -1,0 +1,103 @@
+# Phase-1 event (REPLAY_SPEC.md §1, E8). Times UTC.
+E8_20260514:
+  code: E8
+  name: "NW India multi-station hail, 14 May 2026"
+  date: "2026-05-14"
+  window_start_utc: "2026-05-14T00:00:00Z"
+  window_end_utc: "2026-05-14T23:30:00Z"
+  hazard: hail
+  truth_source: "IMD RMC New Delhi, 'Hail storm report of the Northwest India updated on 16 MAY 2026'"
+  truth_url: "https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf"
+  # Place names exactly as printed in the 14-05-2026 row of the IMD PDF (text extraction). State hints are
+  # used only for geocoding; the PDF's column layout did not survive text extraction (see FIRST_EVENT.md).
+  hail_reports:
+    - {name: Sonmarg, state_hint: "Jammu and Kashmir"}
+    - {name: Ganderbal, state_hint: "Jammu and Kashmir"}
+    - {name: Shopian, state_hint: "Jammu and Kashmir"}
+    - {name: Kulgam, state_hint: "Jammu and Kashmir"}
+    - {name: Shirsi, state_hint: "Uttarakhand"}
+    - {name: Bageshwar, state_hint: "Uttarakhand"}
+    - {name: Chamoli, state_hint: "Uttarakhand"}
+    - {name: Amritsar, state_hint: "Punjab"}
+    - {name: Ambala, state_hint: "Haryana"}
+    - {name: Gurugram, state_hint: "Haryana"}
+    - {name: Bahadurgarh, state_hint: "Haryana"}
+    - {name: Bareilly, printed_as: "Barely", state_hint: "Uttar Pradesh"}
+    - {name: Prayagraj, state_hint: "Uttar Pradesh"}
+    - {name: Varanasi, state_hint: "Uttar Pradesh"}
+    - {name: Unnao, state_hint: "Uttar Pradesh"}
+    - {name: Churu, state_hint: "Rajasthan"}
+
+# ---------------- Phase 4 events (docs/MULTI_EVENT.md §1) ----------------
+# Selection rule, fixed before any scoring: dates printed in the same archived IMD PDF (sha face5916...), whose
+# 24 h of NOAA CPC merged IR exist on the approved archive, with >= 2 reported places inside the frozen domain,
+# and not within +/-1 day of another selected event (VALIDATION_PLAN §3 event-day rule). Candidates were
+# ranked by number of reported places. 5 Apr and 9 Apr 2026 (E9) were rejected: the archive has no April 2026
+# files (HTTP 404; directory listing holds 30-31 Mar, then 1 May onward). Station-to-state assignment follows
+# the text order of the PDF row; the column layout did not survive extraction (NEEDS VERIFICATION, as for E8).
+# Hail reports are context only: the Phase-4 truth is the observed BT < 235 K field, not the reports.
+E8a_20260501:
+  code: E8a
+  name: "NW India multi-station hail, 1 May 2026"
+  date: "2026-05-01"
+  window_start_utc: "2026-05-01T00:00:00Z"
+  window_end_utc: "2026-05-01T23:30:00Z"
+  hazard: hail
+  truth_source: "IMD RMC New Delhi, 'Hail storm report of the Northwest India updated on 16 MAY 2026'"
+  truth_url: "https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf"
+  hail_reports:
+    - {name: Shimla, state_hint: "Himachal Pradesh"}
+    - {name: Jubbarhatti, state_hint: "Himachal Pradesh"}
+    - {name: Kufri, state_hint: "Himachal Pradesh"}
+    - {name: Jubbal, state_hint: "Himachal Pradesh", note: "media report"}
+    - {name: Chopal, state_hint: "Himachal Pradesh", note: "media report"}
+    - {name: Mussoorie, state_hint: "Uttarakhand"}
+    - {name: Mukteshwar, state_hint: "Uttarakhand"}
+    - {name: Lohaghat, state_hint: "Uttarakhand"}
+    - {name: Ambala, state_hint: "Haryana"}
+    - {name: Kurukshetra, state_hint: "Haryana"}
+    - {name: Karnal, state_hint: "Haryana"}
+    - {name: Najibabad, state_hint: "Uttar Pradesh"}
+    - {name: Agra, printed_as: "AGRA(TAJ)", state_hint: "Uttar Pradesh"}
+    - {name: Bareilly, state_hint: "Uttar Pradesh"}
+    - {name: Hindon Air Force Station, printed_as: "HINDON(IAF)", state_hint: "Uttar Pradesh"}
+    - {name: Greater Noida, printed_as: "G B Nagar", state_hint: "Uttar Pradesh", note: "media report"}
+    - {name: Ghaziabad, state_hint: "Uttar Pradesh", note: "media report"}
+    - {name: Baghpat, state_hint: "Uttar Pradesh", note: "media report"}
+    - {name: Bulandshahr, printed_as: "Bulandshahar", state_hint: "Uttar Pradesh", note: "media report"}
+    - {name: Banda, state_hint: "Uttar Pradesh", note: "media report"}
+E10_20260504:
+  code: E10
+  name: "NW India multi-station hail, 4 May 2026"
+  date: "2026-05-04"
+  window_start_utc: "2026-05-04T00:00:00Z"
+  window_end_utc: "2026-05-04T23:30:00Z"
+  hazard: hail
+  truth_source: "IMD RMC New Delhi, 'Hail storm report of the Northwest India updated on 16 MAY 2026'"
+  truth_url: "https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf"
+  hail_reports:
+    - {name: Jammu, state_hint: "Jammu and Kashmir"}
+    - {name: Dehradun, state_hint: "Uttarakhand"}
+    - {name: Mukteshwar, state_hint: "Uttarakhand"}
+    - {name: Jolly Grant, printed_as: "Jollygrant", state_hint: "Uttarakhand"}
+    - {name: Amritsar, state_hint: "Punjab"}
+    - {name: Patiala, state_hint: "Punjab"}
+    - {name: Hisar, state_hint: "Haryana"}
+    - {name: Bhiwani, state_hint: "Haryana"}
+    - {name: Sirsa, state_hint: "Haryana"}
+    - {name: Aligarh, state_hint: "Uttar Pradesh"}
+E11_20260516:
+  code: E11
+  name: "J&K / Uttarakhand hail, 16 May 2026"
+  date: "2026-05-16"
+  window_start_utc: "2026-05-16T00:00:00Z"
+  window_end_utc: "2026-05-16T23:30:00Z"
+  hazard: hail
+  truth_source: "IMD RMC New Delhi, 'Hail storm report of the Northwest India updated on 16 MAY 2026'"
+  truth_url: "https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf"
+  hail_reports:
+    - {name: Pahalgam, state_hint: "Jammu and Kashmir"}
+    - {name: Mussoorie, state_hint: "Uttarakhand"}
+    - {name: Tungnath, state_hint: "Uttarakhand"}
+    - {name: Chandrashila, state_hint: "Uttarakhand"}
+    - {name: Bageshwar, state_hint: "Uttarakhand"}

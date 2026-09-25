@@ -1,0 +1,9 @@
+# Frozen Phase-1 domain (REVIEW_AND_SCOPE.md §6, decision D2) and common grid (ARCHITECTURE.md §3 stage 3)
+name: nw_india_igp
+lat_min: 26.0
+lat_max: 34.0
+lon_min: 72.0
+lon_max: 84.0
+grid:
+  crs: "+proj=laea +lat_0=30 +lon_0=78 +x_0=0 +y_0=0 +ellps=WGS84 +units=m +no_defs"
+  resolution_m: 2000

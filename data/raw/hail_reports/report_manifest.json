@@ -1,0 +1,10 @@
+{
+  "source": "IMD Regional Meteorological Centre New Delhi - hail storm report, NW India",
+  "url": "https://mausam.imd.gov.in/newdelhi/mcdata/hailstorm_report.pdf",
+  "http_last_modified": "Sat, 16 May 2026 10:37:35 GMT",
+  "bytes": 59837,
+  "sha256": "face59166ab1c47ec8979e687d9e6b7307dc0410d765f9217242f495a0556798",
+  "path": "data/raw/hail_reports/hailstorm_report_face59166ab1.pdf",
+  "downloaded_at_utc": "2026-09-24T19:26:26+00:00",
+  "licence": "Public IMD web document; attribution to IMD"
+}

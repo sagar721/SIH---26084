@@ -1,0 +1,21 @@
+# tobac settings (ARCHITECTURE.md §3 stages 4-5). PROPOSED defaults; full tuning is Phase 3 work.
+feature_thresholds_K: [273, 253, 235, 221, 208]   # detection on BT, target=minimum
+segmentation_threshold_K: 245
+# Minimum feature size per threshold, in 2 km pixels (4 km^2 each). The 273 K level needs 25 px (100 km^2):
+# with 4 px it produced 3,581 small warm-cloud fragments on 14 May 2026, which made trackpy's linking
+# subnetworks exceed 30 points and linking fail/hang. Colder levels keep 4 px (~one native 4 km pixel).
+n_min_threshold_px: {273: 25, 253: 8, 235: 4, 221: 4, 208: 4}
+sigma_threshold: 1.0
+position_threshold: weighted_diff
+v_max_m_s: 30                  # upper bound on cell speed used by the linker
+# 'random' searches v_max*dt around the LAST position, so every step is bounded by v_max. 'predict' searches
+# around a velocity-extrapolated position; on 14 May 2026 spurious jumps compounded (99th pct step 246 km/h,
+# max 305 km/h) vs 'random' (99th pct 105, max 108 km/h) - see docs/FIRST_EVENT.md section 5.
+method_linking: random
+memory_frames: 0
+stubs_frames: 2                # keep tracks with >= 2 frames (>= 30 min)
+merge_split_distance_m: 25000
+# Solver cap, not a physical setting (Phase 4): trackpy's exact subnet solver refuses subnetworks above 30 candidate
+# points (its default). 1 May 2026 produced one with 34 points and linking aborted. Raising the cap applies to all
+# events; subnetworks that already solved are solved identically (verified: E8 tracks reproduce byte-identically).
+subnetwork_size_max: 50

@@ -1,0 +1,9 @@
+# Lifecycle phase rules v0 (PRD.md F5, research report §9.2). PROPOSED; mentor sign-off pending (decision D7).
+# Rates are computed per 30 min because the Phase-1 source cadence is 30 min; the PRD's
+# -4 K/15 min initiation rule is applied as -8 K/30 min (linear-rate equivalence: NEEDS VERIFICATION).
+version: v0
+initiation: {bt_below_K: 273, cooling_K_per_30min: -8.0}
+developing: {area_growth: true, min_bt_falling: true}
+mature: {min_bt_below_K: 221, area_change_frac_abs_max: 0.10}
+decaying: {min_bt_warming_K_per_30min: 4.0, cold_core_K: 221, cold_core_shrinking: true}
+cold_core_K: 221

@@ -1,0 +1,23 @@
+# Phase-1 pinned environment (Python 3.11; created with: uv venv --python 3.11 .venv)
+numpy==2.4.6
+pandas==3.0.6
+xarray==2026.7.0
+scipy==1.17.1
+matplotlib==3.11.2
+pyproj==3.7.2
+tobac==1.6.2
+trackpy==0.7
+numba==0.67.0
+scikit-image==0.26.0
+pyyaml==6.0.3
+requests==2.34.2
+netcdf4==1.7.4
+pyarrow==25.0.1
+pytest==9.1.1
+# Phase 2
+opencv-python-headless==5.0.0.93
+# pysteps==1.21.5 — no macOS arm64 wheel; build from the PyPI sdist with "-fopenmp" removed from setup.py
+# (see docs/BASELINE_EVAL.md §9). On Linux: pip install pysteps==1.21.5
+# Phase 6 (histogram GBDT; LightGBM not installed - same algorithm family)
+scikit-learn==1.9.1
+joblib==1.6.0

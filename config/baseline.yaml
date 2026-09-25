@@ -1,0 +1,15 @@
+# Phase-2 baseline settings (VALIDATION_PLAN.md §1 M0/M1, §2). Fixed BEFORE evaluation; no tuning in Phase 2.
+cadence_min: 30                 # native source cadence (docs/FIRST_EVENT.md); 15-min leads would require interpolation
+max_lead_steps: 12              # 12 x 30 min = 360 min (6 h)
+motion:
+  method: lucaskanade           # pySTEPS Lucas-Kanade (dense) on the last 3 frames (t-60, t-30, t)
+  n_past_frames: 3
+  tracer_ref_K: 273.0           # motion estimated on cloud-top "coldness" = max(0, 273 K - BT); warm surface ignored
+extrapolation:
+  method: semilagrangian        # pySTEPS semi-Lagrangian advection of BT itself
+  outval: .nan                  # inflow from outside the grid is unknown -> excluded from scoring (fraction reported)
+event:
+  bt_threshold_K: 235.0         # deep-convection mask (VALIDATION_PLAN §2, gridded task)
+fss_scales_px: [5, 10, 20]      # 10, 20, 40 km on the 2 km grid (effective resolution ~4 km)
+objects:
+  velocity_window_steps: 2      # constant-velocity baseline uses displacement over t-60 -> t (fallback t-30 -> t)

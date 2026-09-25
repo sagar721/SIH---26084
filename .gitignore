@@ -1,0 +1,42 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / web build output
+node_modules/
+dist/
+build/
+playwright-report/
+test-results/
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Large data: NOT committed. Raw files are re-downloadable via
+# pipelines.ingest.cpc_merged_ir (see data/raw/cpc_merged_ir/manifest.json for URLs + SHA-256);
+# derived data is regenerable. See README "Data and evidence" for the storage decision.
+data/raw/*
+!data/raw/cpc_merged_ir/
+data/raw/cpc_merged_ir/*
+!data/raw/cpc_merged_ir/manifest.json
+!data/raw/hail_reports/
+data/interim/
+data/processed/
+
+# Local-only reference material (third-party screenshot; see cleanup notes)
+/WhatsApp Image*.jpeg
