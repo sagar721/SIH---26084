@@ -186,6 +186,8 @@ cd apps/web && npm ci && cd ../..
 cd apps/web
 npm run build && npm run preview      # http://localhost:4173/  (or: npm run dev)
 ```
+**Deploy the frontend (Vercel, static):** Root Directory `apps/web`, Framework Vite, Install `npm ci`, Build `npm run build`, Output `dist`; no environment variables. Settings are pinned in `apps/web/vercel.json`. The app has no router and no backend; replay bundles are served as static files from `apps/web/public/bundles/`.
+
 Open **E8 · 14 May 2026** first. E10 and E11 also open; other events are greyed with a reason.
 
 **Run the tests**
